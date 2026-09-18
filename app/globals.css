@@ -41,6 +41,21 @@
 
 /* Perspective-grid motif is drawn on canvas in components/landing/grid-floor.tsx (pinned visual direction). */
 
+@keyframes kitsu-float-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-32px);
+  }
+}
+
+.animate-float-up {
+  animation: kitsu-float-up 1s var(--ease-smooth) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

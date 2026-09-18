@@ -18,7 +18,7 @@ export default function ProfilePage() {
           Kitsu
         </Link>
         <h1 className="mt-6 font-display text-[48px] leading-none text-bone max-lg:text-[36px]">
-          Profile
+          <span className="text-accent-teal">Profile</span>
         </h1>
         <p className="mt-4 text-[15px] leading-relaxed text-ash">
           Your wallet identity for official runs. Run history and status live here once submissions

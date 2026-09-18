@@ -1,5 +1,7 @@
 import {
   ACCELERATION,
+  COIN_ROW_OFFSETS,
+  GAP_LANDING_TOLERANCE,
   INITIAL_SPEED,
   JUMP_TICKS,
   LANE_COUNT,
@@ -22,6 +24,7 @@ export interface RunState {
   airborneUntil: number
   slidingUntil: number
   coinsCollected: number
+  collectedCoins: Record<string, boolean>
   passed: boolean[]
   status: 'running' | 'finished' | 'failed'
   failure: RunFailure | null
@@ -37,6 +40,7 @@ export function createRunState(course: Course): RunState {
     airborneUntil: 0,
     slidingUntil: 0,
     coinsCollected: 0,
+    collectedCoins: {},
     passed: course.segments.map(() => false),
     status: 'running',
     failure: null,
@@ -103,8 +107,18 @@ export function stepRun(course: Course, state: RunState, actions: InputAction[])
     }
     if (segment.type === 'coin_row') {
       const coinLane = laneNameToIndex(segment.lane ?? 'center')
-      if (previousDistance < segment.distance && state.distance >= segment.distance && coinLane === state.laneIndex) {
-        state.coinsCollected += 1
+      if (coinLane === state.laneIndex) {
+        COIN_ROW_OFFSETS.forEach((offset, coinIndex) => {
+          const key = `${i}-${coinIndex}`
+          if (state.collectedCoins[key]) {
+            return
+          }
+          const coinDistance = segment.distance + offset
+          if (previousDistance < coinDistance && state.distance >= coinDistance) {
+            state.collectedCoins[key] = true
+            state.coinsCollected += 1
+          }
+        })
       }
     }
     if (segmentPassed(segment, previousDistance, state.distance)) {
@@ -169,10 +183,8 @@ function evaluateSegment(
   if (segment.type === 'gap') {
     const start = segment.distance
     const end = start + (segment.width ?? 0)
-    if (crossed && !frame.airborne) {
-      return { tick: frame.tick, distance: frame.distance, segment_index: index }
-    }
-    if (frame.distance > start && frame.distance < end && !frame.airborne) {
+    const fallingEdge = end - GAP_LANDING_TOLERANCE
+    if (frame.distance > start && frame.distance < fallingEdge && !frame.airborne) {
       return { tick: frame.tick, distance: frame.distance, segment_index: index }
     }
     return null
@@ -205,6 +217,9 @@ function segmentPassed(
 ): boolean {
   if (segment.type === 'gap') {
     return distance >= segment.distance + (segment.width ?? 0)
+  }
+  if (segment.type === 'coin_row') {
+    return distance >= segment.distance + COIN_ROW_OFFSETS[COIN_ROW_OFFSETS.length - 1]
   }
   return previousDistance < segment.distance && distance >= segment.distance
 }

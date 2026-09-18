@@ -9,7 +9,8 @@ const MAX_SPACING = 55
 const LEVEL_COUNT_MIN = 12
 const LEVEL_COUNT_MAX = 20
 const GAP_SPEC_MAX = 6
-const GAP_CLEAR_MARGIN = 0.6
+const GAP_SAFETY_FACTOR = 0.5
+const GAP_CLEAR_MARGIN = 0.8
 
 export function speedAtDistance(distance: number): number {
   const accel = ACCELERATION
@@ -52,9 +53,12 @@ function buildSegment(distance: number, rng: SeededRandom): CourseSegment {
     return { distance, type: 'lane_block', lane: pickLane(rng) }
   }
   if (roll < 0.75) {
-    const clearable = Math.floor(maxClearableGap(distance))
-    const width = Math.max(1, Math.min(GAP_SPEC_MAX, clearable))
-    return { distance, type: 'gap', width }
+    const maxWidth = Math.floor(speedAtDistance(distance) * JUMP_SECONDS * GAP_SAFETY_FACTOR)
+    const width = Math.min(GAP_SPEC_MAX, maxWidth)
+    if (width >= 2) {
+      return { distance, type: 'gap', width }
+    }
+    return { distance, type: 'barrier_high' }
   }
   if (roll < 0.9) {
     return {

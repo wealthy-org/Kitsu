@@ -47,17 +47,17 @@ export function Character({ stateRef }: { stateRef: React.RefObject<RunState> })
 
     const body = bodyRef.current
     if (sliding) {
-      body.rotation.x = -1.1
-      body.position.y = 0.15
+      body.rotation.x = 0.12
+      body.position.y = 0.28
     } else if (airborne) {
       body.rotation.x = 0.25
-      body.position.y = 0.35
+      body.position.y = 0.45
     } else if (state.status === 'failed') {
       body.rotation.x = 1.2
-      body.position.y = 0.3
+      body.position.y = 0.62
     } else {
       body.rotation.x = 0
-      body.position.y = 0.35 + Math.sin(state.tick * 0.3) * 0.03
+      body.position.y = 0.5 + Math.sin(state.tick * 0.3) * 0.02
     }
 
     if (headRef.current) {
@@ -71,7 +71,7 @@ export function Character({ stateRef }: { stateRef: React.RefObject<RunState> })
         return
       }
       if (sliding) {
-        leg.rotation.x = 1.2
+        leg.rotation.x = 1.4
       } else if (airborne) {
         leg.rotation.x = 0.9
       } else if (moving) {
@@ -88,8 +88,8 @@ export function Character({ stateRef }: { stateRef: React.RefObject<RunState> })
   })
 
   return (
-    <group ref={rootRef} position={[0, 0, 0]}>
-      <group ref={bodyRef} position={[0, 0.35, 0]}>
+    <group ref={rootRef} position={[0, 0, 0]} rotation={[0, Math.PI, 0]}>
+      <group ref={bodyRef} position={[0, 0.5, 0]}>
         <mesh>
           <boxGeometry args={[0.7, 0.55, 1.15]} />
           <meshStandardMaterial color={BODY} roughness={0.85} />
@@ -150,9 +150,9 @@ export function Character({ stateRef }: { stateRef: React.RefObject<RunState> })
             ref={(node) => {
               legRefs.current[index] = node
             }}
-            position={[x, -0.4, z]}
+            position={[x, -0.27, z]}
           >
-            <boxGeometry args={[0.16, 0.55, 0.16]} />
+            <boxGeometry args={[0.16, 0.45, 0.16]} />
             <meshStandardMaterial color={CREAM} roughness={0.85} />
           </mesh>
         ))}

@@ -20,16 +20,16 @@ export function Terrain({ stateRef }: { stateRef: React.RefObject<RunState> }) {
     if (ctx) {
       ctx.fillStyle = '#000000'
       ctx.fillRect(0, 0, size, size)
-      ctx.strokeStyle = 'rgba(226,226,226,0.2)'
-      ctx.lineWidth = 2
       for (let i = 0; i <= 6; i += 1) {
         const x = (i / 6) * size
+        ctx.strokeStyle = i === 0 || i === 6 ? 'rgba(224,168,92,0.55)' : 'rgba(87,184,174,0.3)'
+        ctx.lineWidth = i === 0 || i === 6 ? 3 : 2
         ctx.beginPath()
         ctx.moveTo(x, 0)
         ctx.lineTo(x, size)
         ctx.stroke()
       }
-      ctx.strokeStyle = 'rgba(226,226,226,0.32)'
+      ctx.strokeStyle = 'rgba(226,226,226,0.28)'
       ctx.lineWidth = 3
       ctx.beginPath()
       ctx.moveTo(0, 1)

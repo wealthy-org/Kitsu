@@ -54,7 +54,8 @@ export function GridFloor() {
         ctx.beginPath()
         ctx.moveTo(width / 2 + lane * width * 0.04, horizon)
         ctx.lineTo(width / 2 + lane * width * 1.1, height)
-        ctx.strokeStyle = 'rgba(226,226,226,0.16)'
+        ctx.strokeStyle =
+          Math.abs(lane) === 1 ? 'rgba(224,168,92,0.3)' : 'rgba(87,184,174,0.2)'
         ctx.stroke()
       }
 
@@ -62,7 +63,7 @@ export function GridFloor() {
       ctx.moveTo(0, horizon)
       ctx.lineTo(width, horizon)
       ctx.lineWidth = 1.4
-      ctx.strokeStyle = 'rgba(255,255,255,0.38)'
+      ctx.strokeStyle = 'rgba(224,168,92,0.5)'
       ctx.stroke()
     }
 

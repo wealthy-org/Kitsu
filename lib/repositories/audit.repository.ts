@@ -5,6 +5,7 @@ import { getDb } from '@/lib/db/client'
 export type AuditEventType =
   | 'cron.publish'
   | 'cron.relay'
+  | 'cron.retention'
   | 'run.verified'
   | 'run.rejected'
   | 'reward.distributed'

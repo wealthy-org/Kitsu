@@ -5,8 +5,17 @@ import { SiweMessage } from 'siwe'
 import { useAccount, useChainId, useConnect, useDisconnect, useSignMessage, useSwitchChain } from 'wagmi'
 import { robinhoodTestnet } from '@/lib/wallet/wagmi'
 import { shortenAddress } from '@/lib/util/format'
+import { signMessageWithFallback } from '@/lib/wallet/sign'
 
 type SignInStatus = 'idle' | 'signing' | 'signed-in' | 'error'
+
+function describeError(error: unknown): string {
+  if (error && typeof error === 'object') {
+    const candidate = error as { shortMessage?: string; message?: string }
+    return candidate.shortMessage ?? candidate.message ?? 'Sign-in failed.'
+  }
+  return 'Sign-in failed.'
+}
 
 export function WalletPanel({ onSignedIn }: { onSignedIn?: () => void }) {
   const { address, isConnected } = useAccount()
@@ -19,7 +28,10 @@ export function WalletPanel({ onSignedIn }: { onSignedIn?: () => void }) {
   const [message, setMessage] = useState<string | null>(null)
 
   const wrongNetwork = isConnected && chainId !== robinhoodTestnet.id
-  const connector = connectors[0]
+  const phantomConnectors = connectors.filter((item) =>
+    `${item.id} ${item.name}`.toLowerCase().includes('phantom'),
+  )
+  const visibleConnectors = phantomConnectors.length > 0 ? phantomConnectors : connectors
 
   async function signIn() {
     if (!address) {
@@ -28,39 +40,64 @@ export function WalletPanel({ onSignedIn }: { onSignedIn?: () => void }) {
     setStatus('signing')
     setMessage(null)
     try {
-      const nonceResponse = await fetch(`/api/wallet/nonce?wallet=${address}`)
+      const nonceResponse = await fetch(`/api/wallet/nonce?wallet=${address}&purpose=login`)
       if (!nonceResponse.ok) {
-        throw new Error('nonce')
+        setStatus('error')
+        setMessage(`Nonce request failed (${nonceResponse.status}).`)
+        return
       }
       const { nonce } = (await nonceResponse.json()) as { nonce: string }
+
+      let signingChainId = chainId
+      const provider = (
+        window as unknown as {
+          ethereum?: { request: (args: { method: string }) => Promise<unknown> }
+        }
+      ).ethereum
+      if (provider) {
+        try {
+          const current = await provider.request({ method: 'eth_chainId' })
+          if (typeof current === 'string') {
+            const parsed = Number.parseInt(current, 16)
+            if (Number.isInteger(parsed) && parsed > 0) {
+              signingChainId = parsed
+            }
+          }
+        } catch {
+          // Fall back to the configured chain id.
+        }
+      }
+
       const siweMessage = new SiweMessage({
         domain: window.location.host,
         address,
         statement: 'Sign in to Kitsu',
         uri: window.location.origin,
         version: '1',
-        chainId,
+        chainId: signingChainId,
         nonce,
       })
       const prepared = siweMessage.prepareMessage()
-      const signature = await signMessageAsync({ message: prepared })
+      const signature = await signMessageWithFallback(prepared, address, signMessageAsync)
       const response = await fetch('/api/wallet/connect', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ wallet_address: address, message: prepared, signature }),
       })
       if (!response.ok) {
-        const body = (await response.json()) as { error?: { message?: string } }
+        const body = (await response.json().catch(() => null)) as {
+          error?: { message?: string }
+        } | null
         setStatus('error')
-        setMessage(body.error?.message ?? 'Sign-in failed.')
+        setMessage(body?.error?.message ?? `Sign-in failed (${response.status}).`)
         return
       }
       setStatus('signed-in')
       setMessage('Signed in. Your session is active.')
       onSignedIn?.()
-    } catch {
+    } catch (error) {
       setStatus('error')
-      setMessage('Sign-in was rejected or failed. Please try again.')
+      setMessage(describeError(error))
     }
   }
 
@@ -73,27 +110,26 @@ export function WalletPanel({ onSignedIn }: { onSignedIn?: () => void }) {
       </p>
 
       {!isConnected && (
-        <div className="mt-5">
-          <button
-            type="button"
-            disabled={connecting || !connector}
-            onClick={() => {
-              if (connector) {
-                connect({ connector })
-              }
-            }}
-            className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber disabled:opacity-50"
-          >
-            Connect wallet
-          </button>
-          {!connector && (
-            <p className="mt-3 text-[13px] text-error">
+        <div className="mt-5 space-y-3">
+          {visibleConnectors.map((item) => (
+            <button
+              key={item.uid}
+              type="button"
+              disabled={connecting}
+              onClick={() => connect({ connector: item })}
+              className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber disabled:opacity-50"
+            >
+              Connect {item.name}
+            </button>
+          ))}
+          {visibleConnectors.length === 0 && (
+            <p className="text-[13px] text-error">
               No compatible wallet found. Install the Phantom extension and reload.
             </p>
           )}
-          {connectError && connector && (
-            <p className="mt-3 text-[13px] text-error">
-              Connection was rejected or failed. Please try again.
+          {connectError && (
+            <p className="text-[13px] text-error">
+              {connectError.message || 'Connection was rejected or failed. Please try again.'}
             </p>
           )}
         </div>

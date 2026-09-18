@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { JUMP_TICKS, LANE_SWITCH_TICKS } from '@/sim/constants'
 import { generateCourse, maxClearableGap } from '@/sim/course-generator'
 import { dailySeed } from '@/sim/prng'
-import { simulate } from '@/sim/run'
+import { simulate, createRunState, stepRun } from '@/sim/run'
 import { scoreFromCoins } from '@/sim/scoring'
 import { tickAtDistance } from '@/tests/sim/helpers'
 import type { Course, InputLog } from '@/sim/types'
@@ -87,8 +87,34 @@ describe('deterministic simulation', () => {
     }
     const result = simulate(course, [])
     expect(result.completed).toBe(true)
-    expect(result.coins_collected).toBe(1)
-    expect(scoreFromCoins(result.coins_collected)).toBe(10)
+    expect(result.coins_collected).toBe(3)
+    expect(scoreFromCoins(result.coins_collected)).toBe(30)
+  })
+
+  it('marks each coin as collected in run state for the animation', () => {
+    const course: Course = {
+      seed: 'coin-state',
+      finish_distance: 200,
+      segments: [{ distance: 80, type: 'coin_row', lane: 'center' }],
+    }
+    const state = createRunState(course)
+    while (state.status === 'running') {
+      stepRun(course, state, [])
+    }
+    expect(state.coinsCollected).toBe(3)
+    expect(state.collectedCoins['0-0']).toBe(true)
+    expect(state.collectedCoins['0-1']).toBe(true)
+    expect(state.collectedCoins['0-2']).toBe(true)
+  })
+
+  it('clears a gap even when landing on the far edge', () => {
+    const course: Course = {
+      seed: 'gap-edge',
+      finish_distance: 200,
+      segments: [{ distance: 100, type: 'gap', width: 3 }],
+    }
+    const log: InputLog = [{ tick: tickAtDistance(100) - 2, action: 'jump' }]
+    expect(simulate(course, log).completed).toBe(true)
   })
 
   it('keeps jump duration within the configured constant', () => {

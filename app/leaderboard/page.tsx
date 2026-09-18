@@ -57,7 +57,7 @@ export default function LeaderboardPage() {
           Kitsu
         </Link>
         <h1 className="mt-6 font-display text-[48px] leading-none text-bone max-lg:text-[36px]">
-          Daily leaderboard
+          <span className="text-accent-teal">Daily</span> leaderboard
         </h1>
         <p className="mt-4 text-[15px] leading-relaxed text-ash">
           Ranked by finish time. Only verified runs appear here.
@@ -100,8 +100,8 @@ export default function LeaderboardPage() {
                   >
                     <td className="py-2 pr-4 text-accent-amber">{String(entry.rank).padStart(2, '0')}</td>
                     <td className="py-2 pr-4">{shorten(entry.wallet_address)}</td>
-                    <td className="py-2 pr-4">{formatTime(entry.best_time_ms)}</td>
-                    <td className="py-2">{entry.best_score}</td>
+                    <td className="py-2 pr-4 text-accent-teal">{formatTime(entry.best_time_ms)}</td>
+                    <td className="py-2 text-accent-amber">{entry.best_score}</td>
                   </tr>
                 ))}
               </tbody>

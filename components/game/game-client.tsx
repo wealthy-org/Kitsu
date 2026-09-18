@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useAccount, useSignMessage } from 'wagmi'
 import { GameHud } from '@/components/game/hud'
 import { GameScene } from '@/components/game/scene'
+import { WalletPanel } from '@/components/wallet/wallet-panel'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { buildRunNonceMessage } from '@/lib/auth/run-nonce-message'
 import { formatTime } from '@/lib/util/format'
+import { signMessageWithFallback } from '@/lib/wallet/sign'
 import { generateCourse } from '@/sim/course-generator'
 import { dailySeed } from '@/sim/prng'
 import type { InputAction } from '@/sim/types'
@@ -23,7 +26,15 @@ const KEY_MAP: Record<string, InputAction> = {
   s: 'slide',
 }
 
-type SubmitState = 'idle' | 'submitting' | 'ok' | 'error' | 'needs-session'
+type SubmitState = 'idle' | 'verifying' | 'ok' | 'error' | 'needs-session'
+
+function describeError(error: unknown): string {
+  if (error && typeof error === 'object') {
+    const candidate = error as { shortMessage?: string; message?: string }
+    return candidate.shortMessage ?? candidate.message ?? 'Submission failed.'
+  }
+  return 'Submission failed.'
+}
 
 export function GameClient() {
   const course = useMemo(() => generateCourse(dailySeed(new Date().toISOString())), [])
@@ -33,6 +44,7 @@ export function GameClient() {
   const { signMessageAsync } = useSignMessage()
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [submitMessage, setSubmitMessage] = useState<string | null>(null)
+  const [showWalletModal, setShowWalletModal] = useState(false)
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -67,6 +79,7 @@ export function GameClient() {
   function resetSubmitState() {
     setSubmitState('idle')
     setSubmitMessage(null)
+    setShowWalletModal(false)
   }
 
   async function submitRun() {
@@ -75,56 +88,85 @@ export function GameClient() {
     }
     if (!address) {
       setSubmitState('needs-session')
-      setSubmitMessage('Connect a wallet and sign in from Profile first.')
+      setSubmitMessage('Connect a wallet and sign in to submit.')
+      setShowWalletModal(true)
       return
     }
-    setSubmitState('submitting')
-    setSubmitMessage(null)
+
+    setSubmitState('verifying')
+    setSubmitMessage('Submitting, verifying...')
     try {
+      const verifyResponse = await fetch('/api/run/verify', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ daily_seed: course.seed, input_log: inputLogRef.current }),
+      })
+      if (!verifyResponse.ok) {
+        setSubmitState('error')
+        setSubmitMessage(`Verification failed (${verifyResponse.status}).`)
+        return
+      }
+      const verified = (await verifyResponse.json()) as {
+        completed: boolean
+        time_ms: number | null
+        score: number
+      }
+      if (!verified.completed || verified.time_ms === null) {
+        setSubmitState('error')
+        setSubmitMessage('Run did not reach the finish.')
+        return
+      }
+
       const nonceResponse = await fetch(`/api/wallet/nonce?wallet=${address}&purpose=submit`)
       if (!nonceResponse.ok) {
-        setSubmitState('needs-session')
-        setSubmitMessage('Wallet not recognised. Sign in from Profile first.')
+        setSubmitState('error')
+        setSubmitMessage(`Nonce request failed (${nonceResponse.status}).`)
         return
       }
       const { nonce } = (await nonceResponse.json()) as { nonce: string }
-      const signature = await signMessageAsync({
-        message: buildRunNonceMessage(address, nonce),
-      })
+      const signature = await signMessageWithFallback(
+        buildRunNonceMessage(address, nonce),
+        address,
+        signMessageAsync,
+      )
+
       const response = await fetch('/api/run/submit', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           daily_seed: course.seed,
           input_log: inputLogRef.current,
-          claimed_time_ms: result.time_ms,
-          claimed_score: result.coins_collected * 10,
+          claimed_time_ms: verified.time_ms,
+          claimed_score: verified.score,
           nonce,
           signature,
         }),
       })
-      const body = (await response.json()) as {
+      const body = (await response.json().catch(() => null)) as {
         rank?: number | null
         is_best?: boolean
         error?: { message?: string }
-      }
+      } | null
+
       if (response.status === 401) {
         setSubmitState('needs-session')
-        setSubmitMessage('Sign in from Profile first.')
+        setSubmitMessage('Sign in to submit your run.')
+        setShowWalletModal(true)
         return
       }
       if (!response.ok) {
         setSubmitState('error')
-        setSubmitMessage(body.error?.message ?? 'Submission was rejected.')
+        setSubmitMessage(body?.error?.message ?? `Submission failed (${response.status}).`)
         return
       }
+
       setSubmitState('ok')
       setSubmitMessage(
-        `Verified. Rank ${body.rank ?? '-'}${body.is_best ? ' (best today)' : ''}.`,
+        `Verified. Rank ${body?.rank ?? '-'}${body?.is_best ? ' (best today)' : ''}.`,
       )
-    } catch {
+    } catch (error) {
       setSubmitState('error')
-      setSubmitMessage('Submission failed. Try again.')
+      setSubmitMessage(describeError(error))
     }
   }
 
@@ -148,13 +190,21 @@ export function GameClient() {
               The course is identical for everyone today. Practice as much as you like; nothing is
               submitted. Jump the high barriers, slide under the low ones, and clear every gap.
             </p>
-            <button
-              type="button"
-              onClick={start}
-              className="mt-5 inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
-            >
-              Start running
-            </button>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={start}
+                className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+              >
+                Start running
+              </button>
+              <Link
+                href="/"
+                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+              >
+                Back to home
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -168,7 +218,11 @@ export function GameClient() {
             <p className="mt-3 text-[15px] text-ash">
               {result.completed
                 ? `You reached the finish in ${formatTime(result.time_ms)}.`
-                : `Failed at ${Math.floor(result.distance)} m. Try again.`}
+                : `Failed at ${Math.floor(result.distance)} m${
+                    result.failure && result.failure.segment_index >= 0
+                      ? ` (${course.segments[result.failure.segment_index]?.type ?? 'obstacle'})`
+                      : ''
+                  }. Try again.`}
             </p>
             <p className="mt-2 font-mono text-[12px] uppercase tracking-[-0.02em] text-frost">
               Coins {result.coins_collected} - Score {result.coins_collected * 10}
@@ -176,7 +230,7 @@ export function GameClient() {
 
             {submitMessage && (
               <p
-                className={`mt-3 text-[13px] ${submitState === 'ok' ? 'text-accent-teal' : 'text-error'}`}
+                className={`mt-3 text-[13px] ${submitState === 'error' ? 'text-error' : 'text-accent-teal'}`}
                 role="status"
               >
                 {submitMessage}
@@ -187,20 +241,12 @@ export function GameClient() {
               {result.completed && submitState !== 'ok' && (
                 <button
                   type="button"
-                  disabled={submitState === 'submitting'}
+                  disabled={submitState === 'verifying'}
                   onClick={submitRun}
                   className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber disabled:opacity-50"
                 >
-                  {submitState === 'submitting' ? 'Submitting' : 'Submit as official run'}
+                  {submitState === 'verifying' ? 'Submitting' : 'Submit as official run'}
                 </button>
-              )}
-              {submitState === 'needs-session' && (
-                <a
-                  href="/profile"
-                  className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
-                >
-                  Go to profile
-                </a>
               )}
               <button
                 type="button"
@@ -212,7 +258,37 @@ export function GameClient() {
               >
                 Run again
               </button>
+              <Link
+                href="/"
+                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+              >
+                Back to home
+              </Link>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showWalletModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="absolute inset-0 z-[60] flex items-center justify-center bg-void/85 px-6"
+        >
+          <div className="w-full max-w-md">
+            <WalletPanel
+              onSignedIn={() => {
+                setShowWalletModal(false)
+                void submitRun()
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowWalletModal(false)}
+              className="mt-3 inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

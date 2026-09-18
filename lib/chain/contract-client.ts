@@ -48,10 +48,6 @@ export function courseIdOf(courseDate: string): Hex {
   return keccak256(stringToHex(courseDate))
 }
 
-export function seedHashOf(seed: string): Hex {
-  return keccak256(stringToHex(seed))
-}
-
 export function runIdOf(runId: string): Hex {
   return keccak256(stringToHex(runId))
 }
@@ -65,7 +61,7 @@ export async function publishCourseOnChain(courseDate: string, seed: string): Pr
     address,
     abi: dailyCourseRegistryAbi,
     functionName: 'publishCourse',
-    args: [courseIdOf(courseDate), seedHashOf(seed)],
+    args: [courseIdOf(courseDate), seed],
   })
 }
 

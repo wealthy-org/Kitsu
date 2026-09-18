@@ -1,4 +1,4 @@
-import { ImageResponse } from 'next/og'
+import { ImageResponse } from '@vercel/og'
 import { apiError } from '@/lib/http/error'
 import { getRunById } from '@/lib/repositories/run.repository'
 import { formatTime, shortenAddress } from '@/lib/util/format'

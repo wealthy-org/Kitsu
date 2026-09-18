@@ -20,7 +20,15 @@ interface RunsResponse {
 }
 
 async function fetchRuns(): Promise<RunsResponse> {
-  const response = await fetch('/api/runs')
+  const sessionResponse = await fetch('/api/wallet/session')
+  const session = sessionResponse.ok
+    ? ((await sessionResponse.json()) as { wallet: string | null })
+    : { wallet: null }
+  if (!session.wallet) {
+    return { runs: [], unauthenticated: true }
+  }
+
+  const response = await fetch('/api/run/history')
   if (response.status === 401) {
     return { runs: [], unauthenticated: true }
   }

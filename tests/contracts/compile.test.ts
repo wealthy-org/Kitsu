@@ -21,7 +21,7 @@ const CONTRACTS = ['DailyCourseRegistry', 'VerifiedRunRegistry', 'SeasonPrizeVau
 describe('solidity contracts', () => {
   it('exposes the expected functions', () => {
     expect(functionNames(readAbi('DailyCourseRegistry'))).toEqual(
-      expect.arrayContaining(['publishCourse', 'getSeedHash', 'published', 'owner']),
+      expect.arrayContaining(['publishCourse', 'getSeed', 'published', 'owner']),
     )
     expect(functionNames(readAbi('VerifiedRunRegistry'))).toEqual(
       expect.arrayContaining(['relayRun', 'relayed', 'courseRegistry', 'owner']),

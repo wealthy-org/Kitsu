@@ -15,9 +15,9 @@
       },
       {
         "indexed": false,
-        "internalType": "bytes32",
-        "name": "seedHash",
-        "type": "bytes32"
+        "internalType": "string",
+        "name": "seed",
+        "type": "string"
       },
       {
         "indexed": false,
@@ -37,12 +37,12 @@
         "type": "bytes32"
       }
     ],
-    "name": "getSeedHash",
+    "name": "getSeed",
     "outputs": [
       {
-        "internalType": "bytes32",
+        "internalType": "string",
         "name": "",
-        "type": "bytes32"
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -69,9 +69,9 @@
         "type": "bytes32"
       },
       {
-        "internalType": "bytes32",
-        "name": "seedHash",
-        "type": "bytes32"
+        "internalType": "string",
+        "name": "seed",
+        "type": "string"
       }
     ],
     "name": "publishCourse",

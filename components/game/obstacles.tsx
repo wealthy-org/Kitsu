@@ -3,7 +3,7 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { LANE_OFFSETS, LANE_WIDTH } from '@/sim/constants'
+import { COIN_ROW_OFFSETS, LANE_OFFSETS, LANE_WIDTH } from '@/sim/constants'
 import { laneNameToIndex, movingObstacleLaneIndex } from '@/sim/collision'
 import type { RunState } from '@/sim/run'
 import type { Course, CourseSegment } from '@/sim/types'
@@ -13,6 +13,7 @@ const FROST = '#e2e2e2'
 const ASH = '#b8bab9'
 const CHARCOAL = '#444345'
 const AMBER = '#e0a85c'
+const TEAL = '#57b8ae'
 const VOID = '#000000'
 
 const TRACK_WIDTH = LANE_WIDTH * 3
@@ -52,21 +53,58 @@ function laneBlock(lane: number) {
 
 function gapVisual(width: number) {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, width / 2]}>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -width / 2]}>
       <planeGeometry args={[TRACK_WIDTH, width]} />
       <meshBasicMaterial color={VOID} toneMapped={false} />
     </mesh>
   )
 }
 
-function coinRow(lane: number) {
+const FRONT_OFFSET = 1
+
+function CoinRow({
+  lane,
+  segmentIndex,
+  stateRef,
+}: {
+  lane: number
+  segmentIndex: number
+  stateRef: React.RefObject<RunState>
+}) {
+  const coinRefs = useRef<Array<THREE.Group | null>>([])
+
+  useFrame(() => {
+    const state = stateRef.current
+    COIN_ROW_OFFSETS.forEach((_, coinIndex) => {
+      const group = coinRefs.current[coinIndex]
+      if (!group) {
+        return
+      }
+      const collected = state?.collectedCoins?.[`${segmentIndex}-${coinIndex}`] === true
+      group.visible = !collected
+      if (!collected) {
+        const tick = state?.tick ?? 0
+        group.rotation.y = tick * 0.06
+        group.position.y = Math.sin(tick * 0.1 + coinIndex) * 0.06
+      }
+    })
+  })
+
   return (
     <group position={[LANE_OFFSETS[lane], 0, 0]}>
-      {[-1.2, 0, 1.2].map((offset) => (
-        <mesh key={offset} position={[0, 0.7, offset]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.32, 0.32, 0.08, 16]} />
-          <meshStandardMaterial color={AMBER} roughness={0.4} metalness={0.2} />
-        </mesh>
+      {COIN_ROW_OFFSETS.map((offset, coinIndex) => (
+        <group
+          key={offset}
+          ref={(node) => {
+            coinRefs.current[coinIndex] = node
+          }}
+          position={[0, 0, -offset - FRONT_OFFSET]}
+        >
+          <mesh position={[0, 0.7, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.32, 0.32, 0.08, 16]} />
+            <meshStandardMaterial color={AMBER} roughness={0.4} metalness={0.2} />
+          </mesh>
+        </group>
       ))}
     </group>
   )
@@ -99,11 +137,46 @@ function MovingObstacle({
   )
 }
 
+function finishLine() {
+  const width = TRACK_WIDTH * 1.15
+  const tiles = 16
+  const tileWidth = width / tiles
+  return (
+    <group>
+      {[-width / 2, width / 2].map((x) => (
+        <mesh key={x} position={[x, 1.7, 0]}>
+          <boxGeometry args={[0.16, 3.4, 0.16]} />
+          <meshStandardMaterial color={TEAL} roughness={0.5} />
+        </mesh>
+      ))}
+      {[2.75, 2.25].map((y, row) => (
+        <group key={y}>
+          {Array.from({ length: tiles }, (_, index) => (
+            <mesh key={index} position={[-width / 2 + tileWidth * (index + 0.5), y, 0]}>
+              <boxGeometry args={[tileWidth, 0.45, 0.14]} />
+              <meshStandardMaterial
+                color={(index + row) % 2 === 0 ? BONE : CHARCOAL}
+                roughness={0.8}
+              />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+        <planeGeometry args={[width, 0.6]} />
+        <meshBasicMaterial color={AMBER} toneMapped={false} />
+      </mesh>
+    </group>
+  )
+}
+
 function ObstacleMesh({
   segment,
+  segmentIndex,
   stateRef,
 }: {
   segment: CourseSegment
+  segmentIndex: number
   stateRef: React.RefObject<RunState>
 }) {
   const position: [number, number, number] = [0, 0, -segment.distance]
@@ -113,7 +186,13 @@ function ObstacleMesh({
       {segment.type === 'barrier_low' && barrierLow()}
       {segment.type === 'lane_block' && laneBlock(laneNameToIndex(segment.lane ?? 'center'))}
       {segment.type === 'gap' && gapVisual(segment.width ?? 2)}
-      {segment.type === 'coin_row' && coinRow(laneNameToIndex(segment.lane ?? 'center'))}
+      {segment.type === 'coin_row' && (
+        <CoinRow
+          lane={laneNameToIndex(segment.lane ?? 'center')}
+          segmentIndex={segmentIndex}
+          stateRef={stateRef}
+        />
+      )}
       {segment.type === 'moving_obstacle' && (
         <MovingObstacle segment={segment} stateRef={stateRef} />
       )}
@@ -137,8 +216,14 @@ export function Obstacles({
   return (
     <group ref={groupRef}>
       {course.segments.map((segment, index) => (
-        <ObstacleMesh key={`${segment.type}-${index}`} segment={segment} stateRef={stateRef} />
+        <ObstacleMesh
+          key={`${segment.type}-${index}`}
+          segment={segment}
+          segmentIndex={index}
+          stateRef={stateRef}
+        />
       ))}
+      <group position={[0, 0, -course.finish_distance]}>{finishLine()}</group>
     </group>
   )
 }

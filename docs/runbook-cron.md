@@ -8,6 +8,7 @@ External scheduler: **cron-job.org** (free tier). Vercel Cron is not used.
 | --- | --- | --- | --- |
 | Publish course | Once per day | POST | `https://<domain>/api/cron/publish-course` |
 | Relay runs | Every few minutes | POST | `https://<domain>/api/cron/relay-runs` |
+| Retention | Once per day | POST | `https://<domain>/api/cron/retention` |
 
 Both jobs must send the header:
 

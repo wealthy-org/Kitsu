@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const record = await getCourseStatus(courseDate)
     return NextResponse.json({
       course_date: courseDate,
-      seed: course.seed,
+      daily_seed: course.seed,
       segments: course.segments,
       status: record?.status ?? 'draft',
       onchain_tx_hash: record?.onchainTxHash ?? null,
