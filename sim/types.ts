@@ -26,7 +26,9 @@ export interface Course {
   segments: CourseSegment[]
 }
 
-export type InputAction = 'jump' | 'slide' | 'left' | 'right'
+export const INPUT_ACTIONS = ['jump', 'slide', 'left', 'right'] as const
+
+export type InputAction = (typeof INPUT_ACTIONS)[number]
 
 export interface InputEvent {
   tick: number

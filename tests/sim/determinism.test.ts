@@ -1,31 +1,13 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import {
-  ACCELERATION,
-  INITIAL_SPEED,
-  JUMP_TICKS,
-  LANE_SWITCH_TICKS,
-  MAX_SPEED,
-  SECONDS_PER_TICK,
-} from '@/sim/constants'
+import { JUMP_TICKS, LANE_SWITCH_TICKS } from '@/sim/constants'
 import { generateCourse, maxClearableGap } from '@/sim/course-generator'
 import { dailySeed } from '@/sim/prng'
 import { simulate } from '@/sim/run'
 import { scoreFromCoins } from '@/sim/scoring'
+import { tickAtDistance } from '@/tests/sim/helpers'
 import type { Course, InputLog } from '@/sim/types'
-
-function tickAtDistance(distance: number): number {
-  const timeToMax = (MAX_SPEED - INITIAL_SPEED) / ACCELERATION
-  const distanceToMax = INITIAL_SPEED * timeToMax + 0.5 * ACCELERATION * timeToMax * timeToMax
-  if (distance >= distanceToMax) {
-    const remaining = (distance - distanceToMax) / MAX_SPEED
-    return Math.ceil((timeToMax + remaining) / SECONDS_PER_TICK)
-  }
-  const discriminant = INITIAL_SPEED * INITIAL_SPEED + 2 * ACCELERATION * distance
-  const time = (-INITIAL_SPEED + Math.sqrt(discriminant)) / ACCELERATION
-  return Math.ceil(time / SECONDS_PER_TICK)
-}
 
 const SEED = dailySeed('2026-09-18')
 

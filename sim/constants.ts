@@ -18,4 +18,6 @@ export const SLIDE_SECONDS = SLIDE_TICKS * SECONDS_PER_TICK
 
 export const COIN_VALUE = 10
 
+export const MAX_INPUT_LOG_BYTES = 256 * 1024
+
 export const MAX_RUN_TICKS = 120000
