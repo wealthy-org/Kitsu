@@ -1,30 +1,24 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/http/error'
 import { inputLogByteSize, verifyRunSchema } from '@/lib/validation/input-log'
 import { verifyRun } from '@/lib/services/run-verify.service'
 import { MAX_INPUT_LOG_BYTES } from '@/sim/constants'
-
-function validationError(message: string) {
-  return NextResponse.json(
-    { error: { code: 'VALIDATION_ERROR', message, details: {} } },
-    { status: 400 },
-  )
-}
 
 export async function POST(request: Request) {
   let payload: unknown
   try {
     payload = await request.json()
   } catch {
-    return validationError('Request body must be valid JSON.')
+    return apiError(400, 'VALIDATION_ERROR', 'Request body must be valid JSON.')
   }
 
   const parsed = verifyRunSchema.safeParse(payload)
   if (!parsed.success) {
-    return validationError('Input shape or type is invalid.')
+    return apiError(400, 'VALIDATION_ERROR', 'Input shape or type is invalid.')
   }
 
   if (inputLogByteSize(parsed.data.input_log) > MAX_INPUT_LOG_BYTES) {
-    return validationError(`input_log exceeds the ${MAX_INPUT_LOG_BYTES} byte limit.`)
+    return apiError(400, 'VALIDATION_ERROR', `input_log exceeds the ${MAX_INPUT_LOG_BYTES} byte limit.`)
   }
 
   const result = verifyRun(parsed.data.daily_seed, parsed.data.input_log)

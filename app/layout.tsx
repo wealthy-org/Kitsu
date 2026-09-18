@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { JetBrains_Mono, Oxanium } from 'next/font/google'
+import { WalletProvider } from '@/context/wallet-context'
 import './globals.css'
 
 const oxanium = Oxanium({
@@ -21,10 +22,14 @@ export const metadata: Metadata = {
   description: 'Same grid. Prove the run.',
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${oxanium.variable} ${jetbrainsMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <WalletProvider>{children}</WalletProvider>
+      </body>
     </html>
   )
 }

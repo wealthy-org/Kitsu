@@ -28,12 +28,20 @@ export default function HomePage() {
           <span className="h-3 w-3 rotate-45 border border-bone" aria-hidden="true" />
           <span className="font-mono text-[13px] tracking-[-0.02em]">KITSU</span>
         </div>
-        <Link
-          href="/play"
-          className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[11px] uppercase tracking-[-0.02em] transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
-        >
-          Play
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/profile"
+            className="font-mono text-[11px] uppercase tracking-[-0.02em] text-frost underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+          >
+            Profile
+          </Link>
+          <Link
+            href="/play"
+            className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[11px] uppercase tracking-[-0.02em] transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+          >
+            Play
+          </Link>
+        </div>
       </header>
 
       <p className="border-b border-frost/12 px-6 py-3 font-mono text-[10px] uppercase tracking-[-0.02em] text-accent-amber lg:hidden">
