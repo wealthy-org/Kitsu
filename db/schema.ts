@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
+  boolean,
   check,
   date,
   index,
@@ -92,6 +93,29 @@ export const leaderboardDaily = pgTable(
     index('leaderboard_daily_course_time_idx').on(table.courseDate, table.bestTimeMs),
   ],
 )
+
+export const seasonRewards = pgTable(
+  'season_rewards',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    seasonLabel: text('season_label').notNull(),
+    walletAddress: text('wallet_address').notNull(),
+    finalRank: integer('final_rank').notNull(),
+    rewardAmount: numeric('reward_amount').notNull(),
+    claimed: boolean('claimed').default(false),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [index('season_rewards_label_rank_idx').on(table.seasonLabel, table.finalRank)],
+)
+
+export const seasons = pgTable('seasons', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  label: text('label').notNull().unique(),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date').notNull(),
+  pool: numeric('pool').notNull().default('0'),
+  createdAt: timestamp('created_at').defaultNow(),
+})
 
 export const auditLogs = pgTable(
   'audit_logs',

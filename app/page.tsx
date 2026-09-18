@@ -36,6 +36,12 @@ export default function HomePage() {
             Leaderboard
           </Link>
           <Link
+            href="/season"
+            className="font-mono text-[11px] uppercase tracking-[-0.02em] text-frost underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+          >
+            Season
+          </Link>
+          <Link
             href="/profile"
             className="font-mono text-[11px] uppercase tracking-[-0.02em] text-frost underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
           >
