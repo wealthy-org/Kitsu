@@ -67,10 +67,13 @@ export async function listVerifiedRunsForRelay(limit = 100) {
     .limit(limit)
 }
 
-export async function markRunsRelayed(ids: string[], txHash: string): Promise<void> {
+export async function markRunsRelayed(entries: Array<{ id: string; txHash: string }>): Promise<void> {
   const db = getDb()
-  for (const id of ids) {
-    await db.update(runs).set({ status: 'relayed', onchainTxHash: txHash }).where(eq(runs.id, id))
+  for (const entry of entries) {
+    await db
+      .update(runs)
+      .set({ status: 'relayed', onchainTxHash: entry.txHash })
+      .where(eq(runs.id, entry.id))
   }
 }
 

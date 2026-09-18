@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "contracts:compile": "node scripts/compile-contracts.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -45,6 +46,7 @@
     "jsdom": "^30.1.0",
     "postcss": "^8.5.28",
     "prettier": "^3.9.8",
+    "solc": "^0.8.36",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vitest": "^5.0.1"
