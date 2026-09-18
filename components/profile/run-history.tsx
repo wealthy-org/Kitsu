@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useAccount } from 'wagmi'
-import { formatTime } from '@/components/game/hud'
+import { useOnlineStatus } from '@/hooks/use-online-status'
+import { formatTime } from '@/lib/util/format'
 
 interface RunRow {
   id: string
@@ -13,49 +14,46 @@ interface RunRow {
   onchain_tx_hash: string | null
 }
 
+interface RunsResponse {
+  runs: RunRow[]
+  unauthenticated: boolean
+}
+
+async function fetchRuns(): Promise<RunsResponse> {
+  const response = await fetch('/api/runs')
+  if (response.status === 401) {
+    return { runs: [], unauthenticated: true }
+  }
+  if (!response.ok) {
+    throw new Error('failed')
+  }
+  const body = (await response.json()) as { runs?: RunRow[] }
+  return { runs: body.runs ?? [], unauthenticated: false }
+}
+
 type LoadState = 'loading' | 'ready' | 'unauthenticated' | 'error'
 
 export function RunHistory({ sessionVersion }: { sessionVersion: number }) {
   const { isConnected } = useAccount()
-  const [state, setState] = useState<LoadState>('loading')
-  const [runs, setRuns] = useState<RunRow[]>([])
+  const online = useOnlineStatus()
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['runs', sessionVersion],
+    queryFn: fetchRuns,
+    enabled: isConnected,
+    refetchInterval: 5000,
+    retry: false,
+  })
 
-  useEffect(() => {
-    if (!isConnected) {
-      return
-    }
-    let active = true
-    fetch('/api/runs')
-      .then((response) => {
-        if (response.status === 401) {
-          if (active) {
-            setState('unauthenticated')
-          }
-          return null
-        }
-        if (!response.ok) {
-          throw new Error('failed')
-        }
-        return response.json() as Promise<{ runs?: RunRow[] }>
-      })
-      .then((body) => {
-        if (!active || !body) {
-          return
-        }
-        setRuns(body.runs ?? [])
-        setState('ready')
-      })
-      .catch(() => {
-        if (active) {
-          setState('error')
-        }
-      })
-    return () => {
-      active = false
-    }
-  }, [isConnected, sessionVersion])
-
-  const view: LoadState = isConnected ? state : 'unauthenticated'
+  const view: LoadState = !isConnected
+    ? 'unauthenticated'
+    : isLoading
+      ? 'loading'
+      : isError
+        ? 'error'
+        : data?.unauthenticated
+          ? 'unauthenticated'
+          : 'ready'
+  const runs = data?.runs ?? []
 
   return (
     <section className="mt-8 rounded-card border border-frost/15 bg-void/70 p-6">
@@ -63,6 +61,12 @@ export function RunHistory({ sessionVersion }: { sessionVersion: number }) {
       <p className="mt-3 text-[15px] leading-relaxed text-ash">
         Official submissions and their verification status.
       </p>
+
+      {!online && (
+        <p className="mt-4 rounded-nav border border-frost/25 px-4 py-2 font-mono text-[11px] uppercase tracking-[-0.02em] text-error">
+          Connection lost
+        </p>
+      )}
 
       <div className="mt-5">
         {view === 'loading' && (
@@ -82,14 +86,21 @@ export function RunHistory({ sessionVersion }: { sessionVersion: number }) {
             {runs.map((run) => (
               <li
                 key={run.id}
-                className="flex flex-wrap items-center justify-between gap-2 py-3 font-mono text-[12px] text-bone"
+                className="flex flex-wrap items-center justify-between gap-3 py-3 font-mono text-[12px] text-bone"
               >
                 <span className="text-ash">{run.course_date}</span>
                 <span className={run.status === 'rejected' ? 'text-error' : 'text-accent-teal'}>
                   {run.status}
                 </span>
                 <span>{run.verified_time_ms === null ? '-' : formatTime(run.verified_time_ms)}</span>
-                <span className="text-ash">{run.onchain_tx_hash ? 'on-chain' : 'off-chain'}</span>
+                <a
+                  href={`/api/share/${run.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-accent-amber underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+                >
+                  Share card
+                </a>
               </li>
             ))}
           </ul>

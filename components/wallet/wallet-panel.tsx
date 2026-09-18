@@ -4,12 +4,9 @@ import { useState } from 'react'
 import { SiweMessage } from 'siwe'
 import { useAccount, useChainId, useConnect, useDisconnect, useSignMessage, useSwitchChain } from 'wagmi'
 import { robinhoodTestnet } from '@/lib/wallet/wagmi'
+import { shortenAddress } from '@/lib/util/format'
 
 type SignInStatus = 'idle' | 'signing' | 'signed-in' | 'error'
-
-function shortenAddress(address: string): string {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`
-}
 
 export function WalletPanel({ onSignedIn }: { onSignedIn?: () => void }) {
   const { address, isConnected } = useAccount()

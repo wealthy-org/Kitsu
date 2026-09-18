@@ -1,8 +1,7 @@
 import { verifyMessage } from 'viem'
+import { buildRunNonceMessage } from './run-nonce-message'
 
-export function buildRunNonceMessage(wallet: string, nonce: string): string {
-  return ['Kitsu run submission', `wallet: ${wallet.toLowerCase()}`, `nonce: ${nonce}`].join('\n')
-}
+export { buildRunNonceMessage } from './run-nonce-message'
 
 export async function verifyRunNonceSignature(
   wallet: string,

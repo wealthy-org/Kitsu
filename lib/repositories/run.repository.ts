@@ -44,6 +44,12 @@ export async function insertRun(values: InsertRunValues) {
   return row
 }
 
+export async function getRunById(id: string) {
+  const db = getDb()
+  const [row] = await db.select().from(runs).where(eq(runs.id, id)).limit(1)
+  return row ?? null
+}
+
 export async function listRunsForWallet(wallet: string, date?: string, limit = 20) {
   const db = getDb()
   const where = date

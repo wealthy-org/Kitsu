@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { formatTime } from '@/components/game/hud'
+import { formatTime } from '@/lib/util/format'
 
 interface Entry {
   rank: number
