@@ -1,0 +1,14 @@
+.next
+node_modules
+out
+coverage
+playwright-report
+test-results
+package-lock.json
+.agents
+.opencode
+.codex
+.impeccable
+.codebase-memory
+project-context
+AGENTS.md

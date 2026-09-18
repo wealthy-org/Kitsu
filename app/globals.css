@@ -1,0 +1,54 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-void: #000000;
+  --color-charcoal: #444345;
+  --color-ash: #b8bab9;
+  --color-frost: #e2e2e2;
+  --color-bone: #ffffff;
+  --color-accent-amber: #e0a85c;
+  --color-accent-teal: #57b8ae;
+  --color-error: #e06a5c;
+  --color-charcoal-hover: #545356;
+
+  --font-display: var(--font-oxanium), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-nav: 2px;
+  --radius-card: 10px;
+  --radius-container: 20px;
+
+  --ease-smooth: cubic-bezier(0.16, 0.8, 0.3, 1);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-void);
+    color: var(--color-bone);
+    font-family: var(--font-display);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-bone);
+    color: var(--color-void);
+  }
+}
+
+/* Perspective-grid motif is drawn on canvas in components/landing/grid-floor.tsx (pinned visual direction). */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
