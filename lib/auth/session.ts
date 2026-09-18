@@ -1,56 +1,26 @@
-import { createHmac, timingSafeEqual } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 
 export const SESSION_COOKIE = 'kts_session'
 export const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60
 
-interface SessionPayload {
-  wallet: string
-  exp: number
+export interface SessionRecord {
+  token: string
+  walletAddress: string
+  expiresAt: Date
 }
 
-function getSecret(): string {
-  const secret = process.env.SESSION_SECRET
-  if (!secret) {
-    throw new Error('SESSION_SECRET is not set')
-  }
-  return secret
+export interface SessionStore {
+  create(record: SessionRecord): Promise<void>
+  find(token: string): Promise<SessionRecord | null>
+  delete(token: string): Promise<void>
 }
 
-export function signSession(wallet: string, now: number = Date.now()): string {
-  const payload: SessionPayload = { wallet, exp: now + SESSION_TTL_SECONDS * 1000 }
-  const body = Buffer.from(JSON.stringify(payload)).toString('base64url')
-  const signature = createHmac('sha256', getSecret()).update(body).digest('base64url')
-  return `${body}.${signature}`
+export function sessionExpiry(now: Date = new Date()): Date {
+  return new Date(now.getTime() + SESSION_TTL_SECONDS * 1000)
 }
 
-export function verifySession(
-  token: string | null | undefined,
-  now: number = Date.now(),
-): SessionPayload | null {
-  if (!token) {
-    return null
-  }
-  const separator = token.lastIndexOf('.')
-  if (separator <= 0) {
-    return null
-  }
-  const body = token.slice(0, separator)
-  const signature = token.slice(separator + 1)
-  const expected = createHmac('sha256', getSecret()).update(body).digest('base64url')
-  const provided = Buffer.from(signature)
-  const wanted = Buffer.from(expected)
-  if (provided.length !== wanted.length || !timingSafeEqual(provided, wanted)) {
-    return null
-  }
-  try {
-    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as SessionPayload
-    if (typeof payload.wallet !== 'string' || typeof payload.exp !== 'number' || payload.exp < now) {
-      return null
-    }
-    return payload
-  } catch {
-    return null
-  }
+export function createSessionToken(): string {
+  return randomBytes(32).toString('hex')
 }
 
 export function sessionCookieOptions(): {
@@ -69,21 +39,54 @@ export function sessionCookieOptions(): {
   }
 }
 
-function readCookie(request: Request, name: string): string | null {
+export function readSessionToken(request: Request): string | null {
   const header = request.headers.get('cookie')
   if (!header) {
     return null
   }
   for (const part of header.split(';')) {
     const [key, ...rest] = part.trim().split('=')
-    if (key === name) {
+    if (key === SESSION_COOKIE) {
       return rest.join('=')
     }
   }
   return null
 }
 
-export function getSessionWallet(request: Request, now: number = Date.now()): string | null {
-  const session = verifySession(readCookie(request, SESSION_COOKIE), now)
-  return session?.wallet ?? null
+export async function resolveSessionWallet(
+  store: SessionStore,
+  token: string | null,
+  now: number = Date.now(),
+): Promise<string | null> {
+  if (!token) {
+    return null
+  }
+  const record = await store.find(token)
+  if (!record || record.expiresAt.getTime() < now) {
+    return null
+  }
+  return record.walletAddress
+}
+
+export async function getSessionWallet(
+  store: SessionStore,
+  request: Request,
+): Promise<string | null> {
+  return resolveSessionWallet(store, readSessionToken(request))
+}
+
+export class InMemorySessionStore implements SessionStore {
+  private readonly records = new Map<string, SessionRecord>()
+
+  async create(record: SessionRecord): Promise<void> {
+    this.records.set(record.token, record)
+  }
+
+  async find(token: string): Promise<SessionRecord | null> {
+    return this.records.get(token) ?? null
+  }
+
+  async delete(token: string): Promise<void> {
+    this.records.delete(token)
+  }
 }

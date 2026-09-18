@@ -11,7 +11,7 @@ function shortenAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
-export function WalletPanel() {
+export function WalletPanel({ onSignedIn }: { onSignedIn?: () => void }) {
   const { address, isConnected } = useAccount()
   const { connect, connectors, isPending: connecting, error: connectError } = useConnect()
   const { disconnect } = useDisconnect()
@@ -60,6 +60,7 @@ export function WalletPanel() {
       }
       setStatus('signed-in')
       setMessage('Signed in. Your session is active.')
+      onSignedIn?.()
     } catch {
       setStatus('error')
       setMessage('Sign-in was rejected or failed. Please try again.')

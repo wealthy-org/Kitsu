@@ -30,6 +30,12 @@ export default function HomePage() {
         </div>
         <div className="flex items-center gap-4">
           <Link
+            href="/leaderboard"
+            className="font-mono text-[11px] uppercase tracking-[-0.02em] text-frost underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+          >
+            Leaderboard
+          </Link>
+          <Link
             href="/profile"
             className="font-mono text-[11px] uppercase tracking-[-0.02em] text-frost underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
           >

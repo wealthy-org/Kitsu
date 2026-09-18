@@ -1,34 +1,51 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { SESSION_COOKIE, getSessionWallet, signSession, verifySession } from '@/lib/auth/session'
+import { describe, expect, it } from 'vitest'
+import {
+  InMemorySessionStore,
+  SESSION_COOKIE,
+  createSessionToken,
+  getSessionWallet,
+  readSessionToken,
+  resolveSessionWallet,
+  sessionExpiry,
+} from '@/lib/auth/session'
 
-beforeEach(() => {
-  process.env.SESSION_SECRET = 'test-secret'
-})
-
-describe('session signing', () => {
-  it('round-trips a signed session', () => {
-    const token = signSession('0xabc')
-    expect(verifySession(token)?.wallet).toBe('0xabc')
+describe('server-side session', () => {
+  it('creates and resolves a session', async () => {
+    const store = new InMemorySessionStore()
+    const token = createSessionToken()
+    await store.create({ token, walletAddress: '0xabc', expiresAt: sessionExpiry() })
+    await expect(resolveSessionWallet(store, token)).resolves.toBe('0xabc')
   })
 
-  it('rejects a tampered token', () => {
-    const token = signSession('0xabc')
-    const lastChar = token.at(-1)
-    const tampered = token.slice(0, -1) + (lastChar === 'A' ? 'B' : 'A')
-    expect(verifySession(tampered)).toBeNull()
+  it('rejects an unknown token', async () => {
+    const store = new InMemorySessionStore()
+    await expect(resolveSessionWallet(store, 'unknown')).resolves.toBeNull()
   })
 
-  it('rejects an expired session', () => {
-    const nineDaysAgo = Date.now() - 9 * 24 * 60 * 60 * 1000
-    const token = signSession('0xabc', nineDaysAgo)
-    expect(verifySession(token)).toBeNull()
+  it('rejects an expired session', async () => {
+    const store = new InMemorySessionStore()
+    await store.create({
+      token: 'expired',
+      walletAddress: '0xabc',
+      expiresAt: new Date(Date.now() - 1000),
+    })
+    await expect(resolveSessionWallet(store, 'expired')).resolves.toBeNull()
   })
 
-  it('reads the wallet from the cookie header', () => {
-    const token = signSession('0xabc')
-    const request = new Request('http://localhost/api/x', {
+  it('reads the session token from the cookie header', () => {
+    const request = new Request('http://localhost/x', {
+      headers: { cookie: `${SESSION_COOKIE}=tok123` },
+    })
+    expect(readSessionToken(request)).toBe('tok123')
+  })
+
+  it('resolves the wallet from the request cookie', async () => {
+    const store = new InMemorySessionStore()
+    const token = createSessionToken()
+    await store.create({ token, walletAddress: '0xabc', expiresAt: sessionExpiry() })
+    const request = new Request('http://localhost/x', {
       headers: { cookie: `${SESSION_COOKIE}=${token}` },
     })
-    expect(getSessionWallet(request)).toBe('0xabc')
+    await expect(getSessionWallet(store, request)).resolves.toBe('0xabc')
   })
 })

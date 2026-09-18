@@ -4,11 +4,12 @@ import { redeemNonce } from '@/lib/auth/nonce'
 import { DbNonceStore } from '@/lib/auth/nonce-store'
 import { isSameOrigin } from '@/lib/auth/origin'
 import { parseSiweNonce, verifySiweMessage } from '@/lib/auth/siwe'
+import { DbSessionStore } from '@/lib/auth/session-store'
 import {
   SESSION_COOKIE,
-  SESSION_TTL_SECONDS,
+  createSessionToken,
   sessionCookieOptions,
-  signSession,
+  sessionExpiry,
 } from '@/lib/auth/session'
 import { apiError } from '@/lib/http/error'
 
@@ -58,10 +59,14 @@ export async function POST(request: Request) {
   }
 
   const address = verified.address.toLowerCase()
+  const expiresAt = sessionExpiry()
+  const token = createSessionToken()
+  await new DbSessionStore().create({ token, walletAddress: address, expiresAt })
+
   const response = NextResponse.json({
     wallet_address: address,
-    session_expires_at: new Date(Date.now() + SESSION_TTL_SECONDS * 1000).toISOString(),
+    session_expires_at: expiresAt.toISOString(),
   })
-  response.cookies.set(SESSION_COOKIE, signSession(address), sessionCookieOptions())
+  response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions())
   return response
 }

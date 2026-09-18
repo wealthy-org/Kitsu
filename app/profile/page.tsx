@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { WalletPanel } from '@/components/wallet/wallet-panel'
+import { ProfileAccount } from '@/components/profile/profile-account'
 
 export const metadata: Metadata = {
   title: 'Profile - Kitsu',
@@ -25,7 +25,7 @@ export default function ProfilePage() {
           are available.
         </p>
         <div className="mt-8">
-          <WalletPanel />
+          <ProfileAccount />
         </div>
       </div>
     </main>
