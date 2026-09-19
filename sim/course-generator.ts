@@ -2,6 +2,7 @@ import {
   ACCELERATION,
   COIN_TOTAL_MAX,
   COIN_TOTAL_MIN,
+  COIN_VALUE,
   INITIAL_SPEED,
   JUMP_SECONDS,
   MAX_SPEED,
@@ -20,7 +21,6 @@ const GAP_SAFETY_FACTOR = 0.5
 const GAP_CLEAR_MARGIN = 0.8
 const COIN_EDGE_MARGIN = 5
 const COIN_SPACING_MIN = 1.8
-const COIN_SPACING_MAX = 5
 
 export function speedAtDistance(distance: number): number {
   const accel = ACCELERATION
@@ -79,8 +79,8 @@ function buildSegment(distance: number, rng: SeededRandom): CourseSegment {
   }
 }
 
-// One `coin_row` is one coin (worth COIN_VALUE). Streams of single-coin segments run between
-// obstacles; the course holds COIN_TOTAL_MIN..MAX coins (PROJECT.md §1.7). Deterministic.
+// One `coin_row` is one coin worth COIN_VALUE. A course holds enough single-coin entries that the
+// total coin value stays inside COIN_TOTAL_MIN..MAX (PROJECT.md §1.7). Deterministic.
 function addCoins(segments: CourseSegment[], rng: SeededRandom): void {
   const gaps: Array<{ start: number; end: number }> = []
   for (let i = 0; i < segments.length - 1; i += 1) {
@@ -95,30 +95,40 @@ function addCoins(segments: CourseSegment[], rng: SeededRandom): void {
   }
 
   const totalLength = gaps.reduce((sum, gap) => sum + (gap.end - gap.start), 0)
-  const target = randomInt(rng, COIN_TOTAL_MIN, COIN_TOTAL_MAX)
-  let spacing = Math.min(COIN_SPACING_MAX, Math.max(COIN_SPACING_MIN, totalLength / target))
+  const targetValue = randomInt(rng, COIN_TOTAL_MIN, COIN_TOTAL_MAX)
+  const coinCount = Math.round(targetValue / COIN_VALUE)
 
-  const build = (): CourseSegment[] => {
-    const coins: CourseSegment[] = []
-    for (const gap of gaps) {
-      const lane = pickLane(rng)
-      for (let d = gap.start; d <= gap.end; d += spacing) {
-        coins.push({ distance: Math.round(d), type: 'coin_row', lane })
-      }
+  const counts = gaps.map((gap) =>
+    Math.max(0, Math.round((coinCount * (gap.end - gap.start)) / totalLength)),
+  )
+  let sum = counts.reduce((total, value) => total + value, 0)
+  let cursor = 0
+  while (sum > coinCount && cursor < gaps.length * 4) {
+    if (counts[cursor % gaps.length] > 0) {
+      counts[cursor % gaps.length] -= 1
+      sum -= 1
     }
-    return coins
+    cursor += 1
+  }
+  while (sum < coinCount && cursor < gaps.length * 8) {
+    counts[cursor % gaps.length] += 1
+    sum += 1
+    cursor += 1
   }
 
-  let coins = build()
-  let guard = 0
-  while (coins.length < COIN_TOTAL_MIN && spacing > COIN_SPACING_MIN && guard < 24) {
-    spacing = Math.max(COIN_SPACING_MIN, spacing - 0.25)
-    coins = build()
-    guard += 1
-  }
-  if (coins.length > COIN_TOTAL_MAX) {
-    coins = coins.slice(0, COIN_TOTAL_MAX)
-  }
+  const coins: CourseSegment[] = []
+  gaps.forEach((gap, index) => {
+    const count = counts[index]
+    if (count <= 0) {
+      return
+    }
+    const step = (gap.end - gap.start) / count
+    const lane = pickLane(rng)
+    for (let k = 0; k < count; k += 1) {
+      const distance = Math.round(gap.start + step * (k + 0.5))
+      coins.push({ distance, type: 'coin_row', lane })
+    }
+  })
 
   const merged = [...segments, ...coins].sort((a, b) => a.distance - b.distance)
   segments.length = 0

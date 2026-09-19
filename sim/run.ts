@@ -1,5 +1,6 @@
 import {
   ACCELERATION,
+  COIN_VALUE,
   GAP_LANDING_TOLERANCE,
   INITIAL_SPEED,
   JUMP_TICKS,
@@ -114,7 +115,7 @@ export function stepRun(course: Course, state: RunState, actions: InputAction[])
         state.distance >= segment.distance
       ) {
         state.collectedCoins[key] = true
-        state.coinsCollected += 1
+        state.coinsCollected += COIN_VALUE
       }
     }
     if (segmentPassed(segment, previousDistance, state.distance)) {

@@ -22,9 +22,10 @@ export function GameHud({ hud, onPause }: GameHudProps) {
 
   useEffect(() => {
     if (hud.coins > previousCoins.current) {
-      const gained = hud.coins - previousCoins.current
+      const gainedValue = hud.coins - previousCoins.current
+      const coinCount = Math.max(1, Math.round(gainedValue / COIN_VALUE))
       const additions: CoinPopup[] = []
-      for (let index = 0; index < gained; index += 1) {
+      for (let index = 0; index < coinCount; index += 1) {
         popupId.current += 1
         additions.push({ id: popupId.current, amount: COIN_VALUE })
       }
@@ -67,13 +68,13 @@ export function GameHud({ hud, onPause }: GameHudProps) {
             <div className="mt-3 flex justify-end gap-5 font-mono text-[13px] uppercase tracking-[-0.02em]">
               <div>
                 <dt className="text-[10px] text-ash">Coins</dt>
-                <dd className="text-[18px] font-semibold text-accent-amber max-lg:text-[15px]">
+                <dd className="text-[20px] font-semibold text-accent-amber max-lg:text-[16px]">
                   {hud.coins}
                 </dd>
               </div>
               <div>
                 <dt className="text-[10px] text-ash">Score</dt>
-                <dd className="text-[18px] font-semibold text-accent-teal max-lg:text-[15px]">
+                <dd className="text-[20px] font-semibold text-accent-teal max-lg:text-[16px]">
                   {hud.score}
                 </dd>
               </div>
