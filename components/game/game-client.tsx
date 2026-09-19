@@ -178,7 +178,7 @@ export function GameClient() {
 
       <GameHud hud={hud} onPause={pause} onResume={resume} onRestart={restart} />
 
-      <p className="absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-nav border border-frost/20 bg-void/80 px-4 py-2 font-mono text-[10px] uppercase tracking-[-0.02em] text-accent-amber lg:hidden">
+      <p className="absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-nav border border-frost/40 bg-void/80 px-4 py-2 font-mono text-[10px] uppercase tracking-[-0.02em] text-accent-soft lg:hidden">
         Optimized for desktop
       </p>
 
@@ -194,13 +194,13 @@ export function GameClient() {
               <button
                 type="button"
                 onClick={start}
-                className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+                className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
               >
                 Start running
               </button>
               <Link
                 href="/"
-                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
               >
                 Back to home
               </Link>
@@ -243,7 +243,7 @@ export function GameClient() {
                   type="button"
                   disabled={submitState === 'verifying'}
                   onClick={submitRun}
-                  className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary disabled:opacity-50"
                 >
                   {submitState === 'verifying' ? 'Submitting' : 'Submit as official run'}
                 </button>
@@ -254,13 +254,13 @@ export function GameClient() {
                   resetSubmitState()
                   restart()
                 }}
-                className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+                className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
               >
                 Run again
               </button>
               <Link
                 href="/"
-                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
               >
                 Back to home
               </Link>
@@ -285,7 +285,7 @@ export function GameClient() {
             <button
               type="button"
               onClick={() => setShowWalletModal(false)}
-              className="mt-3 inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+              className="mt-3 inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
             >
               Close
             </button>

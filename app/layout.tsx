@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { JetBrains_Mono, Oxanium } from 'next/font/google'
+import { CurvedLines } from '@/components/layout/curved-lines'
 import { WalletProvider } from '@/context/wallet-context'
 import './globals.css'
 
@@ -28,6 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${oxanium.variable} ${jetbrainsMono.variable}`}>
       <body>
+        <CurvedLines />
         <WalletProvider>{children}</WalletProvider>
       </body>
     </html>

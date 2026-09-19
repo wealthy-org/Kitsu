@@ -44,7 +44,7 @@ export function GameHud({ hud, onPause, onResume, onRestart }: GameHudProps) {
     <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-6">
       <div className="flex items-start justify-between">
         <div className="font-mono text-[10px] uppercase tracking-[-0.02em] text-frost">
-          <p>Kitsu - practice run</p>
+          <p>Kitsu - play course</p>
           <p className="mt-1 text-ash">Same grid. Prove the run.</p>
         </div>
         <dl className="text-right font-mono text-[11px] uppercase tracking-[-0.02em] text-frost">
@@ -70,7 +70,7 @@ export function GameHud({ hud, onPause, onResume, onRestart }: GameHudProps) {
           <button
             type="button"
             onClick={onPause}
-            className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+            className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
           >
             Pause
           </button>
@@ -79,7 +79,7 @@ export function GameHud({ hud, onPause, onResume, onRestart }: GameHudProps) {
           <button
             type="button"
             onClick={onResume}
-            className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+            className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
           >
             Resume
           </button>
@@ -87,7 +87,7 @@ export function GameHud({ hud, onPause, onResume, onRestart }: GameHudProps) {
         <button
           type="button"
           onClick={onRestart}
-          className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+          className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
         >
           Restart
         </button>

@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from 'react'
 
-export function GridFloor() {
+const COLORS = ['#22d3ee', '#34d399', '#fb7185', '#fb923c', '#f87171']
+
+export function HeroGrid({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -44,27 +46,31 @@ export function GridFloor() {
         ctx.beginPath()
         ctx.moveTo(0, y)
         ctx.lineTo(width, y)
-        ctx.globalAlpha = 0.06 + ease * 0.28
-        ctx.strokeStyle = 'rgba(226,226,226,1)'
+        ctx.globalAlpha = 0.06 + ease * 0.24
+        ctx.strokeStyle = COLORS[i % COLORS.length]
         ctx.stroke()
       }
       ctx.globalAlpha = 1
 
-      for (const lane of [-1, -0.5, 0, 0.5, 1]) {
+      const lanes = [-1, -0.5, 0, 0.5, 1]
+      lanes.forEach((lane, index) => {
         ctx.beginPath()
         ctx.moveTo(width / 2 + lane * width * 0.04, horizon)
         ctx.lineTo(width / 2 + lane * width * 1.1, height)
-        ctx.strokeStyle =
-          Math.abs(lane) === 1 ? 'rgba(224,168,92,0.3)' : 'rgba(87,184,174,0.2)'
+        ctx.globalAlpha = Math.abs(lane) === 1 ? 0.4 : 0.26
+        ctx.strokeStyle = COLORS[(index + 2) % COLORS.length]
         ctx.stroke()
-      }
+      })
+      ctx.globalAlpha = 1
 
       ctx.beginPath()
       ctx.moveTo(0, horizon)
       ctx.lineTo(width, horizon)
       ctx.lineWidth = 1.4
-      ctx.strokeStyle = 'rgba(224,168,92,0.5)'
+      ctx.strokeStyle = COLORS[1]
+      ctx.globalAlpha = 0.5
       ctx.stroke()
+      ctx.globalAlpha = 1
     }
 
     const loop = () => {
@@ -88,7 +94,7 @@ export function GridFloor() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full"
+      className={`pointer-events-none absolute inset-0 h-full w-full ${className ?? ''}`}
     />
   )
 }

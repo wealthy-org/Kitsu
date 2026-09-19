@@ -65,7 +65,7 @@ export function RunHistory({ sessionVersion }: { sessionVersion: number }) {
 
   return (
     <section className="mt-8 rounded-card border border-frost/15 bg-void/70 p-6">
-      <h2 className="font-display text-[26px] leading-none text-bone">Run history</h2>
+      <h2 className="font-display text-[26px] leading-none text-bone">Your Run History</h2>
       <p className="mt-3 text-[15px] leading-relaxed text-ash">
         Official submissions and their verification status.
       </p>
@@ -105,7 +105,7 @@ export function RunHistory({ sessionVersion }: { sessionVersion: number }) {
                   href={`/api/share/${run.id}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-accent-amber underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+                  className="text-accent-soft underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
                 >
                   Share card
                 </a>

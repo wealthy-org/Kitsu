@@ -117,9 +117,9 @@ export function WalletPanel({ onSignedIn }: { onSignedIn?: () => void }) {
               type="button"
               disabled={connecting}
               onClick={() => connect({ connector: item })}
-              className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber disabled:opacity-50"
+              className="inline-flex min-h-11 items-center rounded-nav bg-accent-primary px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary disabled:opacity-50"
             >
-              Connect {item.name}
+              Connect to Phantom
             </button>
           ))}
           {visibleConnectors.length === 0 && (
@@ -150,7 +150,7 @@ export function WalletPanel({ onSignedIn }: { onSignedIn?: () => void }) {
                 type="button"
                 disabled={switching}
                 onClick={() => switchChain({ chainId: robinhoodTestnet.id })}
-                className="mt-3 inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber disabled:opacity-50"
+                className="mt-3 inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary disabled:opacity-50"
               >
                 Switch network
               </button>
@@ -161,7 +161,7 @@ export function WalletPanel({ onSignedIn }: { onSignedIn?: () => void }) {
                 type="button"
                 disabled={status === 'signing'}
                 onClick={signIn}
-                className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber disabled:opacity-50"
+                className="inline-flex min-h-11 items-center rounded-nav bg-accent-primary px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary disabled:opacity-50"
               >
                 {status === 'signed-in' ? 'Sign in again' : 'Sign in with Ethereum'}
               </button>
@@ -172,7 +172,7 @@ export function WalletPanel({ onSignedIn }: { onSignedIn?: () => void }) {
                   setStatus('idle')
                   setMessage(null)
                 }}
-                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber"
+                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
               >
                 Disconnect
               </button>
