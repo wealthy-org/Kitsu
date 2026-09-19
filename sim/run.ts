@@ -1,6 +1,5 @@
 import {
   ACCELERATION,
-  COIN_ROW_OFFSETS,
   GAP_LANDING_TOLERANCE,
   INITIAL_SPEED,
   JUMP_TICKS,
@@ -107,18 +106,15 @@ export function stepRun(course: Course, state: RunState, actions: InputAction[])
     }
     if (segment.type === 'coin_row') {
       const coinLane = laneNameToIndex(segment.lane ?? 'center')
-      if (coinLane === state.laneIndex) {
-        COIN_ROW_OFFSETS.forEach((offset, coinIndex) => {
-          const key = `${i}-${coinIndex}`
-          if (state.collectedCoins[key]) {
-            return
-          }
-          const coinDistance = segment.distance + offset
-          if (previousDistance < coinDistance && state.distance >= coinDistance) {
-            state.collectedCoins[key] = true
-            state.coinsCollected += 1
-          }
-        })
+      const key = `${i}-0`
+      if (
+        coinLane === state.laneIndex &&
+        !state.collectedCoins[key] &&
+        previousDistance < segment.distance &&
+        state.distance >= segment.distance
+      ) {
+        state.collectedCoins[key] = true
+        state.coinsCollected += 1
       }
     }
     if (segmentPassed(segment, previousDistance, state.distance)) {
@@ -217,9 +213,6 @@ function segmentPassed(
 ): boolean {
   if (segment.type === 'gap') {
     return distance >= segment.distance + (segment.width ?? 0)
-  }
-  if (segment.type === 'coin_row') {
-    return distance >= segment.distance + COIN_ROW_OFFSETS[COIN_ROW_OFFSETS.length - 1]
   }
   return previousDistance < segment.distance && distance >= segment.distance
 }

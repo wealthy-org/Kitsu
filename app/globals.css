@@ -45,7 +45,7 @@
   }
 }
 
-/* Perspective-grid motif is drawn on canvas in components/landing/animated-grid.tsx (pinned visual direction). */
+/* Perspective-grid motif is drawn on canvas in components/landing/hero-grid.tsx; the site-wide motif is components/layout/curved-lines.tsx. */
 
 @keyframes kitsu-float-up {
   from {

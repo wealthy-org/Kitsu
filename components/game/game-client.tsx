@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useAccount, useSignMessage } from 'wagmi'
 import { GameHud } from '@/components/game/hud'
@@ -26,6 +26,7 @@ const KEY_MAP: Record<string, InputAction> = {
   s: 'slide',
 }
 
+type Phase = 'menu' | 'countdown' | 'playing' | 'paused' | 'result'
 type SubmitState = 'idle' | 'verifying' | 'ok' | 'error' | 'needs-session'
 
 function describeError(error: unknown): string {
@@ -38,48 +39,96 @@ function describeError(error: unknown): string {
 
 export function GameClient() {
   const course = useMemo(() => generateCourse(dailySeed(new Date().toISOString())), [])
-  const { hud, result, inputLogRef, stateRef, start, pause, resume, restart, registerAction } =
+  const { hud, result, inputLogRef, stateRef, start, pause, resume, reset, registerAction } =
     useGameLoop(course)
   const { address } = useAccount()
   const { signMessageAsync } = useSignMessage()
+
+  const [phase, setPhase] = useState<Phase>('menu')
+  const [countdown, setCountdown] = useState(3)
+  const pendingRef = useRef<'start' | 'resume'>('start')
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [submitMessage, setSubmitMessage] = useState<string | null>(null)
   const [showWalletModal, setShowWalletModal] = useState(false)
+  const [runId, setRunId] = useState<string | null>(null)
+
+  const view: Phase = result && phase === 'playing' ? 'result' : phase
+
+  useEffect(() => {
+    if (phase !== 'countdown') {
+      return undefined
+    }
+    const deadline = performance.now() + 3000
+    const id = setInterval(() => {
+      const remainingMs = deadline - performance.now()
+      if (remainingMs <= 0) {
+        clearInterval(id)
+        if (pendingRef.current === 'start') {
+          start()
+        } else {
+          resume()
+        }
+        setPhase('playing')
+        return
+      }
+      setCountdown(Math.ceil(remainingMs / 1000))
+    }, 200)
+    return () => clearInterval(id)
+  }, [phase, start, resume])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (hud.status === 'running') {
+        if (view === 'playing') {
           pause()
-        } else if (hud.status === 'paused') {
-          resume()
+          setPhase('paused')
+        } else if (view === 'paused') {
+          beginResume()
         }
+        return
+      }
+      if (view !== 'playing') {
         return
       }
       const action = KEY_MAP[event.key] ?? KEY_MAP[event.key.toLowerCase()]
       if (!action) {
         return
       }
-      if (hud.status === 'running') {
-        event.preventDefault()
-        registerAction(action)
-      } else if (hud.status === 'ready') {
-        event.preventDefault()
-        start()
-        registerAction(action)
-      } else if (hud.status === 'paused') {
-        event.preventDefault()
-        resume()
-      }
+      event.preventDefault()
+      registerAction(action)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [hud.status, pause, registerAction, resume, start])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, pause, registerAction])
+
+  function beginCountdown(pending: 'start' | 'resume') {
+    pendingRef.current = pending
+    setCountdown(3)
+    setPhase('countdown')
+  }
+
+  function beginResume() {
+    beginCountdown('resume')
+  }
 
   function resetSubmitState() {
     setSubmitState('idle')
     setSubmitMessage(null)
     setShowWalletModal(false)
+    setRunId(null)
+  }
+
+  function backToMenu() {
+    reset()
+    resetSubmitState()
+    setPhase('menu')
+  }
+
+  function tryAgain() {
+    reset()
+    resetSubmitState()
+    beginCountdown('start')
   }
 
   async function submitRun() {
@@ -143,6 +192,7 @@ export function GameClient() {
         }),
       })
       const body = (await response.json().catch(() => null)) as {
+        run_id?: string
         rank?: number | null
         is_best?: boolean
         error?: { message?: string }
@@ -160,6 +210,7 @@ export function GameClient() {
         return
       }
 
+      setRunId(body?.run_id ?? null)
       setSubmitState('ok')
       setSubmitMessage(
         `Verified. Rank ${body?.rank ?? '-'}${body?.is_best ? ' (best today)' : ''}.`,
@@ -170,61 +221,132 @@ export function GameClient() {
     }
   }
 
-  const started = hud.status !== 'ready'
-
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-void">
       <GameScene course={course} stateRef={stateRef} />
 
-      <GameHud hud={hud} onPause={pause} onResume={resume} onRestart={restart} />
+      {view === 'playing' && (
+        <GameHud
+          hud={hud}
+          onPause={() => {
+            pause()
+            setPhase('paused')
+          }}
+        />
+      )}
 
-      <p className="absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-nav border border-frost/40 bg-void/80 px-4 py-2 font-mono text-[10px] uppercase tracking-[-0.02em] text-accent-soft lg:hidden">
-        Optimized for desktop
-      </p>
+      {view === 'countdown' && (
+        <div
+          data-section="play-countdown"
+          className="absolute inset-0 z-[55] flex flex-col items-center justify-center bg-void/70"
+        >
+          <p className="font-mono text-[12px] uppercase tracking-[-0.02em] text-accent-soft">
+            Get ready
+          </p>
+          <p className="font-display text-[120px] font-semibold leading-none text-bone">
+            {countdown}
+          </p>
+        </div>
+      )}
 
-      {!started && (
-        <div className="absolute inset-0 flex items-center justify-center bg-void/60 px-6">
-          <div className="max-w-md rounded-card border border-frost/20 bg-void/80 p-6 text-center">
-            <h1 className="font-display text-[30px] leading-none text-bone">Practice run</h1>
-            <p className="mt-3 text-[15px] leading-relaxed text-ash">
-              The course is identical for everyone today. Practice as much as you like; nothing is
-              submitted. Jump the high barriers, slide under the low ones, and clear every gap.
+      {view === 'menu' && (
+        <div
+          data-section="play-menu"
+          className="absolute inset-0 z-50 overflow-y-auto bg-gradient-to-r from-void/95 via-void/80 to-void/30"
+        >
+          <div className="mx-auto flex min-h-full max-w-6xl flex-col justify-center px-8 py-12">
+            <h1 className="font-display text-[56px] leading-none text-bone max-lg:text-[38px]">
+              KITSU course
+            </h1>
+            <p className="mt-3 font-mono text-[12px] uppercase tracking-[-0.02em] text-accent-teal">
+              Same grid, prove the run
             </p>
-            <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <p className="mt-5 max-w-md text-[15px] leading-relaxed text-ash">
+              One course for everyone today. Practice as much as you like; nothing is submitted.
+              Clear every obstacle and finish to post an official run.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={start}
-                className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                autoFocus
+                onClick={() => beginCountdown('start')}
+                className="inline-flex min-h-11 items-center rounded-nav bg-accent-primary px-6 font-mono text-[13px] uppercase tracking-[-0.02em] text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-void"
               >
-                Start running
+                Play
               </button>
               <Link
                 href="/"
-                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-6 font-mono text-[13px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
               >
                 Back to home
               </Link>
+            </div>
+            <div className="mt-8 max-w-md rounded-card border border-frost/50 bg-charcoal/85 p-4">
+              <p className="font-mono text-[10px] uppercase tracking-[-0.02em] text-ash">Controls</p>
+              <ul className="mt-2 grid grid-cols-2 gap-y-1 font-mono text-[12px] text-bone">
+                <li>Left / Right: change lane</li>
+                <li>Up / Space: jump</li>
+                <li>Down / S: slide</li>
+                <li>Esc: pause</li>
+              </ul>
+            </div>
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[-0.02em] text-ash">
+              Built for desktop. Use a keyboard on a larger screen for the full run.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {view === 'paused' && (
+        <div
+          data-section="play-paused"
+          className="absolute inset-0 z-[58] flex items-center justify-end bg-void/85 px-8"
+        >
+          <div className="w-full max-w-sm">
+            <h2 className="font-display text-[38px] leading-none text-bone">GAME PAUSED</h2>
+            <p className="mt-3 text-[14px] leading-relaxed text-ash">
+              Take a breath. Resume when you are ready.
+            </p>
+            <div className="mt-6 flex flex-col gap-3">
+              <button
+                type="button"
+                autoFocus
+                onClick={beginResume}
+                className="inline-flex min-h-11 items-center justify-center rounded-nav bg-accent-primary px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+              >
+                Resume
+              </button>
+              <button
+                type="button"
+                onClick={backToMenu}
+                className="inline-flex min-h-11 items-center justify-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+              >
+                Back to main screen
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {result && (
-        <div className="absolute inset-0 flex items-center justify-center bg-void/70 px-6">
-          <div className="max-w-md rounded-card border border-frost/20 bg-void/85 p-6 text-center">
-            <h2 className="font-display text-[26px] leading-none text-bone">
-              {result.completed ? 'Finish' : 'Run ended'}
+      {view === 'result' && result && (
+        <div
+          data-section="play-result"
+          className="absolute inset-0 z-[58] flex items-center justify-center bg-void/80 px-6"
+        >
+          <div className="w-full max-w-md rounded-card border border-frost/50 bg-charcoal p-6 text-center shadow-card">
+            <h2 className="font-display text-[30px] leading-none text-bone">
+              {result.completed ? 'Home at last' : 'Run ended'}
             </h2>
             <p className="mt-3 text-[15px] text-ash">
               {result.completed
-                ? `You reached the finish in ${formatTime(result.time_ms)}.`
+                ? `You made it home in ${formatTime(result.time_ms)}.`
                 : `Failed at ${Math.floor(result.distance)} m${
                     result.failure && result.failure.segment_index >= 0
                       ? ` (${course.segments[result.failure.segment_index]?.type ?? 'obstacle'})`
                       : ''
                   }. Try again.`}
             </p>
-            <p className="mt-2 font-mono text-[12px] uppercase tracking-[-0.02em] text-frost">
+            <p className="mt-2 font-mono text-[13px] uppercase tracking-[-0.02em] text-frost">
               Coins {result.coins_collected} - Score {result.coins_collected * 10}
             </p>
 
@@ -237,33 +359,50 @@ export function GameClient() {
               </p>
             )}
 
-            <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
               {result.completed && submitState !== 'ok' && (
                 <button
                   type="button"
+                  autoFocus
                   disabled={submitState === 'verifying'}
                   onClick={submitRun}
-                  className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center rounded-nav bg-accent-primary px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary disabled:opacity-50"
                 >
                   {submitState === 'verifying' ? 'Submitting' : 'Submit as official run'}
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => {
-                  resetSubmitState()
-                  restart()
-                }}
-                className="inline-flex min-h-11 items-center rounded-nav border border-frost bg-charcoal px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:bg-charcoal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
-              >
-                Run again
-              </button>
+              {submitState === 'ok' && runId && (
+                <a
+                  href={`/api/share/${runId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                >
+                  Share card
+                </a>
+              )}
+              {!result.completed && (
+                <button
+                  type="button"
+                  onClick={tryAgain}
+                  className="inline-flex min-h-11 items-center rounded-nav bg-accent-primary px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                >
+                  Try again
+                </button>
+              )}
               <Link
-                href="/"
+                href="/leaderboard"
                 className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
               >
-                Back to home
+                View leaderboard
               </Link>
+              <button
+                type="button"
+                onClick={backToMenu}
+                className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+              >
+                Back to main screen
+              </button>
             </div>
           </div>
         </div>

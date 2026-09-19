@@ -27,17 +27,22 @@ export async function GET(request: Request) {
 
   const courseDate = parsed.data.date ?? todayIso()
   const limit = parsed.data.limit ?? 100
-  const entries = await listDailyLeaderboard(courseDate, limit)
-  const ranks = computeRank(entries)
 
-  return NextResponse.json({
-    course_date: courseDate,
-    entries: entries.map((entry, index) => ({
-      rank: ranks[index],
-      wallet_address: entry.wallet_address,
-      best_time_ms: entry.best_time_ms,
-      best_score: entry.best_score,
-    })),
-    meta: { limit, count: entries.length },
-  })
+  try {
+    const entries = await listDailyLeaderboard(courseDate, limit)
+    const ranks = computeRank(entries)
+
+    return NextResponse.json({
+      course_date: courseDate,
+      entries: entries.map((entry, index) => ({
+        rank: ranks[index],
+        wallet_address: entry.wallet_address,
+        best_time_ms: entry.best_time_ms,
+        best_score: entry.best_score,
+      })),
+      meta: { limit, count: entries.length },
+    })
+  } catch {
+    return apiError(503, 'DEPENDENCY_UNAVAILABLE', 'Daily leaderboard is temporarily unavailable.')
+  }
 }

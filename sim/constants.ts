@@ -18,7 +18,8 @@ export const SLIDE_SECONDS = SLIDE_TICKS * SECONDS_PER_TICK
 
 export const COIN_VALUE = 10
 
-export const COIN_ROW_OFFSETS = [-1.2, 0, 1.2] as const
+export const COIN_TOTAL_MIN = 250
+export const COIN_TOTAL_MAX = 300
 
 export const GAP_LANDING_TOLERANCE = 0.5
 

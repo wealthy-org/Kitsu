@@ -12,6 +12,8 @@ export interface GameHudState {
   timeMs: number
   coins: number
   score: number
+  distance: number
+  finishDistance: number
   status: GameStatus
 }
 
@@ -24,6 +26,7 @@ export interface GameLoop {
   pause: () => void
   resume: () => void
   restart: () => void
+  reset: () => void
   registerAction: (action: InputAction) => void
 }
 
@@ -51,6 +54,8 @@ export function useGameLoop(course: Course): GameLoop {
     timeMs: 0,
     coins: 0,
     score: 0,
+    distance: 0,
+    finishDistance: course.finish_distance,
     status: 'ready',
   })
   const [result, setResult] = useState<RunResult | null>(null)
@@ -61,9 +66,11 @@ export function useGameLoop(course: Course): GameLoop {
       timeMs: state.tick * TICK_MS,
       coins: state.coinsCollected,
       score: scoreFromCoins(state.coinsCollected),
+      distance: state.distance,
+      finishDistance: course.finish_distance,
       status: statusRef.current,
     })
-  }, [])
+  }, [course])
 
   const stopLoop = useCallback(() => {
     if (rafRef.current !== null) {
@@ -149,6 +156,18 @@ export function useGameLoop(course: Course): GameLoop {
     pendingRef.current.push(action)
   }, [])
 
+  const reset = useCallback(() => {
+    stopLoop()
+    stateRef.current = createRunState(course)
+    inputLogRef.current = []
+    pendingRef.current = []
+    accRef.current = 0
+    hudCounterRef.current = 0
+    setResult(null)
+    statusRef.current = 'ready'
+    publishHud()
+  }, [course, publishHud, stopLoop])
+
   useEffect(() => stopLoop, [stopLoop])
 
   return {
@@ -160,6 +179,7 @@ export function useGameLoop(course: Course): GameLoop {
     pause,
     resume,
     restart: start,
+    reset,
     registerAction,
   }
 }

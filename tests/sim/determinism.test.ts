@@ -87,8 +87,8 @@ describe('deterministic simulation', () => {
     }
     const result = simulate(course, [])
     expect(result.completed).toBe(true)
-    expect(result.coins_collected).toBe(3)
-    expect(scoreFromCoins(result.coins_collected)).toBe(30)
+    expect(result.coins_collected).toBe(1)
+    expect(scoreFromCoins(result.coins_collected)).toBe(10)
   })
 
   it('marks each coin as collected in run state for the animation', () => {
@@ -101,10 +101,17 @@ describe('deterministic simulation', () => {
     while (state.status === 'running') {
       stepRun(course, state, [])
     }
-    expect(state.coinsCollected).toBe(3)
+    expect(state.coinsCollected).toBe(1)
     expect(state.collectedCoins['0-0']).toBe(true)
-    expect(state.collectedCoins['0-1']).toBe(true)
-    expect(state.collectedCoins['0-2']).toBe(true)
+  })
+
+  it('keeps the daily coin count within the configured range', () => {
+    for (const date of ['2026-09-18', '2026-09-19', '2026-12-31']) {
+      const course = generateCourse(dailySeed(date))
+      const total = course.segments.filter((segment) => segment.type === 'coin_row').length
+      expect(total).toBeGreaterThanOrEqual(250)
+      expect(total).toBeLessThanOrEqual(300)
+    }
   })
 
   it('clears a gap even when landing on the far edge', () => {
