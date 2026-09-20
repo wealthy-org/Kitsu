@@ -149,6 +149,11 @@ Core gameplay, verification, wallet sessions, database and leaderboard, contract
 status UX, share card, and season rewards are implemented. Mainnet deployment is pending funding
 of the production relayer account.
 
+## Third-party assets
+
+The Tokyo scene is generated procedurally in three.js (no external models). The Polyfork low-poly
+catalog was used only as visual reference for shapes, palette, and proportions.
+
 ## License
 
 Private and proprietary. All rights reserved.

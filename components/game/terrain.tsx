@@ -67,20 +67,14 @@ export function Terrain({ stateRef }: { stateRef: React.RefObject<RunState> }) {
 
   return (
     <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, -120]}>
+        <planeGeometry args={[900, 900]} />
+        <meshStandardMaterial color="#0d1017" roughness={1} />
+      </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -60]}>
         <planeGeometry args={[TRACK_WIDTH, PLANE_LENGTH]} />
         <meshBasicMaterial ref={materialRef} map={texture} toneMapped={false} />
       </mesh>
-      {[-1, 1].map((side) => (
-        <mesh
-          key={side}
-          position={[side * (TRACK_WIDTH / 2 + 0.8), 0.12, -60]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        >
-          <planeGeometry args={[1.6, PLANE_LENGTH]} />
-          <meshBasicMaterial color="#0e1016" toneMapped={false} />
-        </mesh>
-      ))}
     </group>
   )
 }

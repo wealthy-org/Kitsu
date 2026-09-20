@@ -5,7 +5,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { Character } from '@/components/game/character'
 import { Obstacles } from '@/components/game/obstacles'
 import { Terrain } from '@/components/game/terrain'
-import { CityProps, Ground, SkyDome, Skyline } from '@/components/game/tokyo'
+import { CityProps, SkyDome, Skyline } from '@/components/game/tokyo'
 import type { RunState } from '@/sim/run'
 import type { Course } from '@/sim/types'
 
@@ -39,7 +39,6 @@ export function GameScene({
       <CameraRig />
       <SkyDome />
       <Skyline />
-      <Ground />
       <Terrain stateRef={stateRef} />
       <CityProps stateRef={stateRef} />
       <Obstacles course={course} stateRef={stateRef} />

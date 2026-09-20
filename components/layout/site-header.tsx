@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useSyncExternalStore } from 'react'
+import { useAccount, useDisconnect } from 'wagmi'
 
 const SECTIONS = [
   { id: 'about', label: 'About' },
@@ -12,12 +14,45 @@ const SECTIONS = [
 
 const ROUTES = [
   { href: '/leaderboard', label: 'Leaderboard' },
-  { href: '/connect/wallet', label: 'Connect Wallet' },
+  { href: '/play', label: 'Play Course' },
 ]
+
+const subscribeNoop = () => () => undefined
+const getClientSnapshot = () => true
+const getServerSnapshot = () => false
+
+function ExitIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+      <path
+        d="M15 3h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path d="M10 17l5-5-5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M15 12H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 export function SiteHeader() {
   const pathname = usePathname()
+  const router = useRouter()
   const onLanding = pathname === '/'
+  const { address } = useAccount()
+  const { disconnect } = useDisconnect()
+  const mounted = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot)
+
+  async function handleExit() {
+    try {
+      await fetch('/api/wallet/logout', { method: 'POST' })
+    } catch {
+      // The wallet still disconnects even if the session call fails.
+    }
+    disconnect()
+    router.push('/')
+  }
 
   return (
     <header
@@ -49,18 +84,35 @@ export function SiteHeader() {
               href={route.href}
               aria-current={pathname === route.href ? 'page' : undefined}
               className={`font-mono text-[11px] uppercase tracking-[-0.02em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary ${
-                pathname === route.href ? 'text-accent-soft' : 'text-ash hover:text-bone'
+                pathname === route.href ? 'text-accent-primary' : 'text-ash hover:text-bone'
               }`}
             >
               {route.label}
             </Link>
           ))}
-          <Link
-            href="/play"
-            className="inline-flex min-h-9 items-center rounded-nav bg-accent-primary px-4 font-mono text-[11px] uppercase tracking-[-0.02em] text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-void"
-          >
-            Play Course
-          </Link>
+
+          {mounted ? (
+            address ? (
+              <button
+                type="button"
+                onClick={handleExit}
+                aria-label="Disconnect wallet"
+                title="Disconnect wallet"
+                className="inline-flex h-9 min-h-9 items-center justify-center rounded-nav bg-accent-primary px-3 text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-void"
+              >
+                <ExitIcon />
+              </button>
+            ) : (
+              <Link
+                href="/connect/wallet"
+                className="inline-flex min-h-9 items-center rounded-nav bg-accent-primary px-4 font-mono text-[11px] uppercase tracking-[-0.02em] text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-void"
+              >
+                Connect Wallet
+              </Link>
+            )
+          ) : (
+            <span className="block h-9 w-9" aria-hidden="true" />
+          )}
         </nav>
       </div>
     </header>

@@ -99,6 +99,16 @@
   pointer-events: none;
 }
 
+/* Hover-only border beam for the How cards (About keeps the beam always on). */
+.beam-hover {
+  opacity: 0;
+  transition: opacity 300ms var(--ease-smooth);
+}
+
+.group:hover .beam-hover {
+  opacity: 1;
+}
+
 /* Abstract curved-line background (shape and colors from the Notus register background). */
 @keyframes curve-drift {
   0%,

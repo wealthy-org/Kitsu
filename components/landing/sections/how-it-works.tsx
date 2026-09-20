@@ -47,9 +47,9 @@ export function HowItWorks() {
             {STEPS.map((step, index) => (
               <li
                 key={step.title}
-                className="relative rounded-card border border-frost/50 bg-charcoal p-5 shadow-card transition-colors duration-200 hover:border-accent-primary/60 hover:bg-charcoal-hover"
+                className="group relative rounded-card border border-frost/50 bg-charcoal p-5 shadow-card transition-colors duration-200 hover:border-accent-primary/60 hover:bg-charcoal-hover"
               >
-                <BorderBeam />
+                <BorderBeam className="beam-hover" />
                 <span className="font-mono text-[12px] uppercase tracking-[-0.02em] text-accent-soft">
                   {String(index + 1).padStart(2, '0')}
                 </span>

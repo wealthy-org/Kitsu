@@ -11,6 +11,10 @@ const CREAM = '#e2e2e2'
 const DARK = '#444345'
 const COLLAR = '#57b8ae'
 const JUMP_HEIGHT = 1.4
+// The engine collides at the character's centre (z = 0). The model's snout sits at local z = 1.2
+// (mirrored by the root rotation), so shift the model back by that amount to put the snout on the
+// collision plane.
+const COLLISION_ALIGN_Z = 1.2
 
 export function Character({ stateRef }: { stateRef: React.RefObject<RunState> }) {
   const rootRef = useRef<THREE.Group>(null)
@@ -88,7 +92,7 @@ export function Character({ stateRef }: { stateRef: React.RefObject<RunState> })
   })
 
   return (
-    <group ref={rootRef} position={[0, 0, 0]} rotation={[0, Math.PI, 0]}>
+    <group ref={rootRef} position={[0, 0, COLLISION_ALIGN_Z]} rotation={[0, Math.PI, 0]}>
       <group ref={bodyRef} position={[0, 0.5, 0]}>
         <mesh>
           <boxGeometry args={[0.7, 0.55, 1.15]} />

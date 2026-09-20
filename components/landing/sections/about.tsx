@@ -1,4 +1,5 @@
 import { BorderBeam } from '@/components/ui/border-beam'
+import { CoursePreview } from '@/components/landing/sections/course-preview'
 
 const POINTS = [
   {
@@ -17,37 +18,39 @@ const POINTS = [
 
 export function About() {
   return (
-    <section
-      id="about"
-      data-section="about"
-      className="scroll-mt-20 border-b border-frost/40"
-    >
+    <section id="about" data-section="about" className="scroll-mt-20 border-b border-frost/40">
       <div className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="font-display text-[30px] leading-none text-bone">What Kitsu is</h2>
-        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-ash">
-          Kitsu is a short daily 3D runner built around fairness. Run, jump, slide, and switch lanes
-          through a course that everyone shares, then submit your best attempt to the day&apos;s
-          leaderboard.
-        </p>
-        <div className="relative mt-10 grid gap-px overflow-hidden rounded-card border border-frost/50 bg-frost/50 md:grid-cols-3">
-          {POINTS.map((point, index) => (
-            <article
-              key={point.label}
-              className="relative bg-charcoal p-6 transition-colors duration-200 hover:bg-charcoal-hover"
-            >
-              <BorderBeam />
-              {index > 0 && (
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 select-none font-mono text-sm leading-none text-frost"
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
+          <div>
+            <h2 className="font-display text-[30px] leading-none text-bone">What Kitsu is</h2>
+            <p className="mt-4 text-[15px] leading-relaxed text-ash">
+              Kitsu is a short daily 3D runner built around fairness. Run, jump, slide, and switch
+              lanes through a course that everyone shares, then submit your best attempt to the
+              day&apos;s leaderboard.
+            </p>
+            <div className="relative mt-8 grid gap-px overflow-hidden rounded-card border border-frost/50 bg-frost/50">
+              {POINTS.map((point, index) => (
+                <article
+                  key={point.label}
+                  className="relative bg-charcoal p-6 transition-colors duration-200 hover:bg-charcoal-hover"
                 >
-                  +
-                </span>
-              )}
-              <h3 className="font-display text-[20px] leading-tight text-bone">{point.label}</h3>
-              <p className="mt-3 text-[14px] leading-relaxed text-ash">{point.body}</p>
-            </article>
-          ))}
+                  <BorderBeam />
+                  {index > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 select-none font-mono text-sm leading-none text-frost"
+                    >
+                      +
+                    </span>
+                  )}
+                  <h3 className="font-display text-[20px] leading-tight text-bone">{point.label}</h3>
+                  <p className="mt-3 text-[14px] leading-relaxed text-ash">{point.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <CoursePreview />
         </div>
       </div>
     </section>

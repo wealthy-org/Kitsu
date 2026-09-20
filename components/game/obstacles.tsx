@@ -9,13 +9,25 @@ import type { RunState } from '@/sim/run'
 import type { Course, CourseSegment } from '@/sim/types'
 
 const FROST = '#e2e2e2'
-const ASH = '#94a3b8'
 const AMBER = '#f59e0b'
-const RED = '#ef4444'
-const STRIPE = '#f1f5f9'
 
 const TRACK_WIDTH = LANE_WIDTH * 3
-const FRONT_OFFSET = 1
+const FRONT_OFFSET = 0
+
+// The engine collides at the obstacle's anchor point. Deep meshes are centred on that anchor, so
+// shift them forward by half their depth to land their leading face exactly on the collision plane.
+function visualOffset(segment: CourseSegment): number {
+  if (segment.type === 'barrier_high' || segment.type === 'barrier_low') {
+    return -0.18
+  }
+  if (segment.type === 'lane_block') {
+    return -3
+  }
+  if (segment.type === 'moving_obstacle') {
+    return -2
+  }
+  return 0
+}
 
 const BUS_COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#a855f7']
 
@@ -41,7 +53,8 @@ function stripeBar(
   )
 }
 
-// Tall solid wall: the player must jump over it (PROJECT.md §1.6).
+// Tall solid wall: the player must jump over it (PROJECT.md §1.6). The panel is solid, so it
+// cannot read as a slide opening.
 function barrierHigh() {
   return (
     <group>
@@ -50,10 +63,6 @@ function barrierHigh() {
         <meshStandardMaterial color="#1f2937" roughness={0.85} />
       </mesh>
       {stripeBar(TRACK_WIDTH * 0.98, 0.9, 0.36, 0.45, 12, '#f59e0b', '#111827')}
-      <mesh position={[0, 1.15, 0]} rotation={[0, 0, 0]}>
-        <coneGeometry args={[0.5, 0.55, 4]} />
-        <meshStandardMaterial color="#fde68a" roughness={0.6} />
-      </mesh>
       {[-1, 1].map((side) => (
         <mesh key={side} position={[side * TRACK_WIDTH * 0.46, 0.5, 0]}>
           <boxGeometry args={[0.16, 1.0, 0.16]} />
@@ -71,25 +80,20 @@ function barrierLow() {
       {[-1, 1].map((side) => (
         <mesh key={side} position={[side * TRACK_WIDTH * 0.46, 0.95, 0]}>
           <boxGeometry args={[0.18, 1.9, 0.18]} />
-          <meshStandardMaterial color={ASH} roughness={0.7} />
+          <meshStandardMaterial color="#94a3b8" roughness={0.7} />
         </mesh>
       ))}
       <mesh position={[0, 1.6, 0]}>
         <boxGeometry args={[TRACK_WIDTH * 0.98, 0.34, 0.32]} />
         <meshStandardMaterial color="#7f1d1d" roughness={0.85} />
       </mesh>
-      {stripeBar(TRACK_WIDTH * 0.98, 0.34, 0.36, 1.6, 14, RED, STRIPE)}
-      {[-1, 0, 1].map((slot) => (
-        <mesh key={slot} position={[slot * 1.6, 1.25, 0]}>
-          <coneGeometry args={[0.22, 0.36, 4]} />
-          <meshStandardMaterial color="#f1f5f9" roughness={0.6} />
-        </mesh>
-      ))}
+      {stripeBar(TRACK_WIDTH * 0.98, 0.34, 0.36, 1.6, 14, '#ef4444', '#f1f5f9')}
     </group>
   )
 }
 
-// City bus blocking a lane, color varies per lane.
+// City bus blocking a lane. The front faces the player (+Z): windshield, destination sign, and
+// headlights sit just outside the body so nothing z-fights.
 function laneBlock(lane: number) {
   const color = BUS_COLORS[lane % BUS_COLORS.length]
   return (
@@ -98,47 +102,65 @@ function laneBlock(lane: number) {
         <boxGeometry args={[LANE_WIDTH * 0.92, 2.0, 6]} />
         <meshStandardMaterial color={color} roughness={0.55} metalness={0.1} />
       </mesh>
-      <mesh position={[0, 1.75, 0.1]}>
-        <boxGeometry args={[LANE_WIDTH * 0.94, 0.7, 5.2]} />
-        <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.2} />
+      <mesh position={[0, 1.75, 3.03]}>
+        <boxGeometry args={[LANE_WIDTH * 0.83, 0.85, 0.1]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.35} />
       </mesh>
-      <mesh position={[0, 0.75, 2.55]}>
-        <boxGeometry args={[LANE_WIDTH * 0.8, 0.7, 0.4]} />
-        <meshStandardMaterial color="rgba(255,233,168,1)" transparent opacity={0.6} />
+      <mesh position={[0, 2.45, 3.06]}>
+        <boxGeometry args={[LANE_WIDTH * 0.6, 0.3, 0.08]} />
+        <meshStandardMaterial color="#fde68a" roughness={0.6} />
       </mesh>
-      {[-1, 1].map((side) => (
-        <mesh key={side} position={[side * LANE_WIDTH * 0.4, 2.35, 0]} rotation={[0, 0, side * 0.2]}>
-          <boxGeometry args={[0.1, 0.4, 0.4]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.5} />
+      {[-0.6, 0.6].map((x) => (
+        <mesh key={`headlight-${x}`} position={[x, 0.8, 3.06]}>
+          <boxGeometry args={[0.3, 0.2, 0.08]} />
+          <meshStandardMaterial color="#fff7cc" roughness={0.4} />
         </mesh>
       ))}
+      {[-1, 1].map((side) => (
+        <mesh key={`side-window-${side}`} position={[side * LANE_WIDTH * 0.47, 1.8, 0]}>
+          <boxGeometry args={[0.06, 0.7, 4.4]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.35} />
+        </mesh>
+      ))}
+      <mesh position={[0, 2.35, -0.6]}>
+        <boxGeometry args={[LANE_WIDTH * 0.7, 0.2, 2.2]} />
+        <meshStandardMaterial color="#334155" roughness={0.7} />
+      </mesh>
+      {[-2, 2].map((z) =>
+        [-1, 1].map((side) => (
+          <mesh
+            key={`wheel-${z}-${side}`}
+            position={[side * LANE_WIDTH * 0.46, 0.42, z]}
+            rotation={[0, 0, Math.PI / 2]}
+          >
+            <cylinderGeometry args={[0.42, 0.42, 0.24, 12]} />
+            <meshStandardMaterial color="#111827" roughness={0.9} />
+          </mesh>
+        )),
+      )}
     </group>
   )
 }
 
-// Damaged road section. Always blocks the full width; the deep hole sits in 1, 2, or 3 lanes.
-function gapVisual(width: number, deepLanes: number) {
-  const lanes = [0, 1, 2].slice(0, Math.max(1, Math.min(3, deepLanes)))
+// Broken road (pothole) section: one rough asphalt patch with a little rubble. Always blocks the
+// full width. The engine treats it as the PROJECT.md gap.
+function gapVisual(width: number) {
   return (
     <group position={[0, 0, -width / 2]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
         <planeGeometry args={[TRACK_WIDTH, width]} />
-        <meshBasicMaterial color="#0a0b10" toneMapped={false} />
+        <meshStandardMaterial color="#161a20" roughness={1} />
       </mesh>
-      {[-1, 0, 1].map((lane) => (
+      {[-1.6, 0, 1.6].map((x, index) => (
         <mesh
-          key={lane}
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[LANE_OFFSETS[lane + 1], 0.03, 0]}
+          key={`rubble-${x}`}
+          position={[x, 0.1, (index - 1) * 0.6]}
+          rotation={[0.3, index * 0.7, 0.2]}
         >
-          <planeGeometry args={[LANE_WIDTH * 0.92, width * 0.82]} />
-          <meshBasicMaterial
-            color={lanes.includes(lane + 1) ? '#000000' : '#2b2f38'}
-            toneMapped={false}
-          />
+          <boxGeometry args={[0.4, 0.18, 0.5]} />
+          <meshStandardMaterial color="#3b3f49" roughness={1} />
         </mesh>
       ))}
-      {stripeBar(TRACK_WIDTH * 0.98, 0.3, 0.26, 0.35, 14, AMBER, '#111827')}
     </group>
   )
 }
@@ -200,14 +222,36 @@ function MovingObstacle({
       ref={groupRef}
       position={[LANE_OFFSETS[laneNameToIndex(segment.lane ?? 'center')], 0, 0]}
     >
-      <mesh position={[0, 0.85, 0]}>
-        <boxGeometry args={[LANE_WIDTH * 0.85, 1.4, 4]} />
+      <mesh position={[0, 0.65, 0]}>
+        <boxGeometry args={[LANE_WIDTH * 0.8, 0.8, 3.6]} />
         <meshStandardMaterial color={FROST} roughness={0.5} metalness={0.15} />
       </mesh>
-      <mesh position={[0, 1.2, 0.1]}>
-        <boxGeometry args={[LANE_WIDTH * 0.87, 0.5, 3.2]} />
-        <meshStandardMaterial color="#0f172a" roughness={0.3} />
+      <mesh position={[0, 1.3, -0.35]}>
+        <boxGeometry args={[LANE_WIDTH * 0.7, 0.6, 1.7]} />
+        <meshStandardMaterial color="#e2e8f0" roughness={0.5} />
       </mesh>
+      <mesh position={[0, 1.25, 0.52]}>
+        <boxGeometry args={[LANE_WIDTH * 0.62, 0.5, 0.08]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.35} />
+      </mesh>
+      {[-0.45, 0.45].map((x) => (
+        <mesh key={`car-headlight-${x}`} position={[x, 0.7, 1.84]}>
+          <boxGeometry args={[0.28, 0.16, 0.08]} />
+          <meshStandardMaterial color="#fff7cc" roughness={0.4} />
+        </mesh>
+      ))}
+      {[1.15, -1.15].map((z) =>
+        [-1, 1].map((side) => (
+          <mesh
+            key={`car-wheel-${z}-${side}`}
+            position={[side * LANE_WIDTH * 0.36, 0.32, z]}
+            rotation={[0, 0, Math.PI / 2]}
+          >
+            <cylinderGeometry args={[0.32, 0.32, 0.2, 12]} />
+            <meshStandardMaterial color="#0b0f1a" roughness={0.9} />
+          </mesh>
+        )),
+      )}
     </group>
   )
 }
@@ -265,14 +309,13 @@ function ObstacleMesh({
   segmentIndex: number
   stateRef: React.RefObject<RunState>
 }) {
-  const position: [number, number, number] = [0, 0, -segment.distance]
-  const deepLanes = ((segment.width ?? 2) % 3) + 1
+  const position: [number, number, number] = [0, 0, -segment.distance + visualOffset(segment)]
   return (
     <group position={position}>
       {segment.type === 'barrier_high' && barrierHigh()}
       {segment.type === 'barrier_low' && barrierLow()}
       {segment.type === 'lane_block' && laneBlock(laneNameToIndex(segment.lane ?? 'center'))}
-      {segment.type === 'gap' && gapVisual(segment.width ?? 2, deepLanes)}
+      {segment.type === 'gap' && gapVisual(segment.width ?? 2)}
       {segment.type === 'coin_row' && (
         <CoinRow
           lane={laneNameToIndex(segment.lane ?? 'center')}
@@ -310,7 +353,7 @@ export function Obstacles({
           stateRef={stateRef}
         />
       ))}
-      <group position={[0, 0, -course.finish_distance]}>{finishHouse()}</group>
+      <group position={[0, 0, -course.finish_distance - 2.2]}>{finishHouse()}</group>
     </group>
   )
 }
