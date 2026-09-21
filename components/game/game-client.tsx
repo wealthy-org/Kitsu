@@ -5,8 +5,10 @@ import Link from 'next/link'
 import { useAccount, useSignMessage } from 'wagmi'
 import { GameHud } from '@/components/game/hud'
 import { GameScene } from '@/components/game/scene'
+import { AudioSettings } from '@/components/game/audio-settings'
 import { WalletPanel } from '@/components/wallet/wallet-panel'
 import { useGameLoop } from '@/hooks/use-game-loop'
+import { audioManager } from '@/lib/audio/audio-manager'
 import { buildRunNonceMessage } from '@/lib/auth/run-nonce-message'
 import { formatTime } from '@/lib/util/format'
 import { signMessageWithFallback } from '@/lib/wallet/sign'
@@ -55,6 +57,33 @@ export function GameClient() {
   const view: Phase = result && phase === 'playing' ? 'result' : phase
 
   useEffect(() => {
+    const manager = audioManager()
+    manager.playMusic('menu')
+    const unlock = () => manager.unlock()
+    window.addEventListener('pointerdown', unlock)
+    window.addEventListener('keydown', unlock)
+    if (process.env.NODE_ENV !== 'production') {
+      ;(window as unknown as { __kitsuAudio?: unknown }).__kitsuAudio = manager
+    }
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+      manager.stopMusic()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!result) {
+      return
+    }
+    if (result.completed) {
+      audioManager().finish()
+    } else {
+      audioManager().hit()
+    }
+  }, [result])
+
+  useEffect(() => {
     if (phase !== 'countdown') {
       return undefined
     }
@@ -63,6 +92,7 @@ export function GameClient() {
       const remainingMs = deadline - performance.now()
       if (remainingMs <= 0) {
         clearInterval(id)
+        audioManager().go()
         if (pendingRef.current === 'start') {
           start()
         } else {
@@ -71,7 +101,13 @@ export function GameClient() {
         setPhase('playing')
         return
       }
-      setCountdown(Math.ceil(remainingMs / 1000))
+      const next = Math.ceil(remainingMs / 1000)
+      setCountdown((current) => {
+        if (next !== current) {
+          audioManager().countdown(3 - next)
+        }
+        return next
+      })
     }, 200)
     return () => clearInterval(id)
   }, [phase, start, resume])
@@ -95,6 +131,14 @@ export function GameClient() {
         return
       }
       event.preventDefault()
+      const manager = audioManager()
+      if (action === 'jump') {
+        manager.bark()
+      } else if (action === 'slide') {
+        manager.slide()
+      } else {
+        manager.lane()
+      }
       registerAction(action)
     }
     window.addEventListener('keydown', onKeyDown)
@@ -106,6 +150,8 @@ export function GameClient() {
     pendingRef.current = pending
     setCountdown(3)
     setPhase('countdown')
+    audioManager().playMusic('run')
+    audioManager().countdown(0)
   }
 
   function beginResume() {
@@ -123,6 +169,7 @@ export function GameClient() {
     reset()
     resetSubmitState()
     setPhase('menu')
+    audioManager().playMusic('menu')
   }
 
   function tryAgain() {
@@ -265,7 +312,7 @@ export function GameClient() {
               One course for everyone today. Practice as much as you like; nothing is submitted.
               Clear every obstacle and finish to post an official run.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 autoFocus
@@ -274,6 +321,7 @@ export function GameClient() {
               >
                 Play
               </button>
+              <AudioSettings />
               <Link
                 href="/"
                 className="inline-flex min-h-11 items-center rounded-nav border border-frost px-6 font-mono text-[13px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
@@ -290,9 +338,9 @@ export function GameClient() {
                 <li>Esc: pause</li>
               </ul>
             </div>
-            <p className="mt-4 font-mono text-[10px] uppercase tracking-[-0.02em] text-ash">
-              Built for desktop. Use a keyboard on a larger screen for the full run.
-            </p>
+              <p className="mt-4 font-mono text-[10px] uppercase tracking-[-0.02em] text-ash">
+                Built for desktop. Use a keyboard on a larger screen for the full run.
+              </p>
           </div>
         </div>
       )}
@@ -308,14 +356,17 @@ export function GameClient() {
               Take a breath. Resume when you are ready.
             </p>
             <div className="mt-6 flex flex-col gap-3">
-              <button
-                type="button"
-                autoFocus
-                onClick={beginResume}
-                className="inline-flex min-h-11 items-center justify-center rounded-nav bg-accent-primary px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
-              >
-                Resume
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  autoFocus
+                  onClick={beginResume}
+                  className="inline-flex min-h-11 flex-1 items-center justify-center rounded-nav bg-accent-primary px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                >
+                  Resume
+                </button>
+                <AudioSettings />
+              </div>
               <button
                 type="button"
                 onClick={backToMenu}

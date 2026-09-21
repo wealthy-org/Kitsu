@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { COIN_VALUE } from '@/sim/constants'
 import type { GameHudState } from '@/hooks/use-game-loop'
 import { formatTime } from '@/lib/util/format'
+import { audioManager } from '@/lib/audio/audio-manager'
 
 interface GameHudProps {
   hud: GameHudState
@@ -28,6 +29,7 @@ export function GameHud({ hud, onPause }: GameHudProps) {
       for (let index = 0; index < coinCount; index += 1) {
         popupId.current += 1
         additions.push({ id: popupId.current, amount: COIN_VALUE })
+        audioManager().coin(index * 0.05)
       }
       setPopups((current) => [...current, ...additions])
       const ids = new Set(additions.map((popup) => popup.id))
