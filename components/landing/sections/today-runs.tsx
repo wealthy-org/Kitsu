@@ -1,10 +1,9 @@
 import Link from 'next/link'
-import { formatTime, shortenAddress } from '@/lib/util/format'
+import { shortenAddress } from '@/lib/util/format'
 
 interface TopEntry {
   wallet_address: string
-  best_time_ms: number
-  best_score: number
+  points: number
 }
 
 export function TodayRuns({
@@ -12,13 +11,15 @@ export function TodayRuns({
   obstacleCount,
   finishDistance,
   previewReady,
-  topEntries,
+  seasonLabel,
+  seasonTop,
 }: {
   date: string
   obstacleCount: number
   finishDistance: number
   previewReady: boolean
-  topEntries: TopEntry[]
+  seasonLabel: string
+  seasonTop: TopEntry[]
 }) {
   return (
     <section id="today" data-section="today" className="scroll-mt-20 border-b border-frost/40">
@@ -44,24 +45,32 @@ export function TodayRuns({
           <div className="[perspective:1100px]">
             <article className="rounded-card border border-frost/50 bg-charcoal p-6 shadow-card lg:[transform:rotateY(-11deg)_rotateX(2deg)_rotate(2deg)]">
               <p className="font-mono text-[11px] uppercase tracking-[-0.02em] text-accent-teal">
-                Yesterday&apos;s top runs
+                {seasonLabel ? `Season leaders · ${seasonLabel}` : 'Season leaders'}
               </p>
-              {topEntries.length === 0 ? (
-                <p className="mt-4 text-[15px] text-ash">No verified runs yesterday.</p>
+              {seasonTop.length === 0 ? (
+                <p className="mt-4 text-[15px] text-ash">
+                  No verified runs yet this season, so the board is still open.
+                </p>
               ) : (
                 <ol className="mt-4 divide-y divide-frost/40">
-                  {topEntries.map((entry, index) => (
+                  {seasonTop.map((entry, index) => (
                     <li
                       key={entry.wallet_address}
-                      className="flex items-center justify-between py-3 font-mono text-[12px] text-bone"
+                      className="flex items-center justify-between gap-4 py-3 font-mono text-[12px] text-bone"
                     >
                       <span className="text-accent-amber">{String(index + 1).padStart(2, '0')}</span>
-                      <span className="text-ash">{shortenAddress(entry.wallet_address)}</span>
-                      <span className="text-accent-teal">{formatTime(entry.best_time_ms)}</span>
+                      <span className="flex-1 text-ash">{shortenAddress(entry.wallet_address)}</span>
+                      <span className="text-accent-teal">{entry.points} pts</span>
                     </li>
                   ))}
                 </ol>
               )}
+              <Link
+                href="/leaderboard"
+                className="mt-5 inline-flex min-h-11 items-center font-mono text-[11px] uppercase tracking-[-0.02em] text-accent-soft underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+              >
+                See the full season board
+              </Link>
             </article>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAccount } from 'wagmi'
 import { useOnlineStatus } from '@/hooks/use-online-status'
+import { ShareIcon } from '@/components/ui/share-icon'
 import { formatTime } from '@/lib/util/format'
 
 interface RunRow {
@@ -105,9 +106,10 @@ export function RunHistory({ sessionVersion }: { sessionVersion: number }) {
                   href={`/api/share/${run.id}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-accent-soft underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                  className="inline-flex items-center gap-1.5 text-accent-soft underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
                 >
-                  Share card
+                  <ShareIcon className="h-3.5 w-3.5" />
+                  Share
                 </a>
               </li>
             ))}

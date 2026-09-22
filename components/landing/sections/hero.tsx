@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { HeroGrid } from '@/components/landing/hero-grid'
+import { WalletCtaLink } from '@/components/landing/wallet-cta-link'
 
 export function Hero() {
   return (
@@ -29,12 +30,7 @@ export function Hero() {
           >
             Play today&apos;s course
           </Link>
-          <Link
-            href="/connect/wallet"
-            className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
-          >
-            Connect wallet
-          </Link>
+          <WalletCtaLink className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary" />
         </div>
       </div>
     </section>

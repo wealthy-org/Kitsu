@@ -6,6 +6,7 @@ import { useAccount, useSignMessage } from 'wagmi'
 import { GameHud } from '@/components/game/hud'
 import { GameScene } from '@/components/game/scene'
 import { AudioSettings } from '@/components/game/audio-settings'
+import { ShareIcon } from '@/components/ui/share-icon'
 import { WalletPanel } from '@/components/wallet/wallet-panel'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { audioManager } from '@/lib/audio/audio-manager'
@@ -427,9 +428,10 @@ export function GameClient() {
                   href={`/api/share/${runId}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex min-h-11 items-center rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-nav border border-frost px-5 font-mono text-[12px] uppercase tracking-[-0.02em] text-bone transition-colors duration-200 hover:border-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
                 >
-                  Share card
+                  <ShareIcon />
+                  Share
                 </a>
               )}
               {!result.completed && (

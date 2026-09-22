@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useSyncExternalStore } from 'react'
-import { useAccount, useDisconnect } from 'wagmi'
+import { useAccount } from 'wagmi'
 
 const SECTIONS = [
   { id: 'about', label: 'About' },
@@ -21,38 +21,25 @@ const subscribeNoop = () => () => undefined
 const getClientSnapshot = () => true
 const getServerSnapshot = () => false
 
-function ExitIcon() {
+function PersonIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+      <circle cx="12" cy="8.5" r="3.75" stroke="currentColor" strokeWidth="1.8" />
       <path
-        d="M15 3h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-4"
+        d="M4.5 20a7.5 7.5 0 0 1 15 0"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
       />
-      <path d="M10 17l5-5-5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M15 12H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   )
 }
 
 export function SiteHeader() {
   const pathname = usePathname()
-  const router = useRouter()
   const onLanding = pathname === '/'
   const { address } = useAccount()
-  const { disconnect } = useDisconnect()
   const mounted = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot)
-
-  async function handleExit() {
-    try {
-      await fetch('/api/wallet/logout', { method: 'POST' })
-    } catch {
-      // The wallet still disconnects even if the session call fails.
-    }
-    disconnect()
-    router.push('/')
-  }
 
   return (
     <header
@@ -93,15 +80,14 @@ export function SiteHeader() {
 
           {mounted ? (
             address ? (
-              <button
-                type="button"
-                onClick={handleExit}
-                aria-label="Disconnect wallet"
-                title="Disconnect wallet"
-                className="inline-flex h-9 min-h-9 items-center justify-center rounded-nav bg-accent-primary px-3 text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-void"
+              <Link
+                href="/connect/wallet"
+                aria-label="Open profile"
+                title="Open profile"
+                className="inline-flex h-9 min-h-9 w-9 items-center justify-center rounded-nav bg-accent-primary text-white transition-colors duration-200 hover:bg-accent-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-void"
               >
-                <ExitIcon />
-              </button>
+                <PersonIcon />
+              </Link>
             ) : (
               <Link
                 href="/connect/wallet"

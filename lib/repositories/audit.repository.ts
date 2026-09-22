@@ -6,6 +6,7 @@ export type AuditEventType =
   | 'cron.publish'
   | 'cron.relay'
   | 'cron.retention'
+  | 'cron.season-rollover'
   | 'run.verified'
   | 'run.rejected'
   | 'reward.distributed'

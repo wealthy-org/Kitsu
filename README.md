@@ -149,6 +149,15 @@ Core gameplay, verification, wallet sessions, database and leaderboard, contract
 status UX, share card, and season rewards are implemented. Mainnet deployment is pending funding
 of the production relayer account.
 
+### Generated assets
+
+| Script | Output |
+| --- | --- |
+| `node scripts/generate-audio.mjs` | `public/audio/{bark,yip,whine}.wav` (self-generated dog sound effects) |
+| `node scripts/generate-share-character.mjs` | `public/share/shiba.png` (transparent cut-out of the About shiba artwork, for the share card) |
+
+`public/share/background.png` is a static screenshot of the landing hero background (grid lines plus the abstract curves).
+
 ## Third-party assets
 
 The Tokyo scene is generated procedurally in three.js (no external models). The Polyfork low-poly

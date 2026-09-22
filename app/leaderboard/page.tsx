@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { SiteHeader } from '@/components/layout/site-header'
 import { SiteFooter } from '@/components/layout/site-footer'
 import { useOnlineStatus } from '@/hooks/use-online-status'
@@ -18,6 +18,14 @@ interface SeasonEntry {
   wallet_address: string
   points: number
   reward_amount: number
+}
+
+interface SeasonMeta {
+  page: number
+  total_pages: number
+  total: number
+  has_next: boolean
+  wallet_address: string | null
 }
 
 type LoadState = 'loading' | 'ready' | 'error'
@@ -39,6 +47,23 @@ async function fetchDaily(date?: string): Promise<DailyEntry[]> {
   return body.entries ?? []
 }
 
+interface SeasonPayload {
+  season_label: string
+  entries: SeasonEntry[]
+  meta: SeasonMeta
+}
+
+async function fetchSeason(page: number): Promise<SeasonPayload | null> {
+  const response = await fetch(`/api/leaderboard/season?page=${page}`)
+  if (response.status === 404) {
+    return null
+  }
+  if (!response.ok) {
+    throw new Error('failed')
+  }
+  return (await response.json()) as SeasonPayload
+}
+
 export default function LeaderboardPage() {
   const online = useOnlineStatus()
   const [todayState, setTodayState] = useState<LoadState>('loading')
@@ -48,6 +73,8 @@ export default function LeaderboardPage() {
   const [seasonState, setSeasonState] = useState<SeasonState>('loading')
   const [seasonLabel, setSeasonLabel] = useState('')
   const [seasonEntries, setSeasonEntries] = useState<SeasonEntry[]>([])
+  const [seasonMeta, setSeasonMeta] = useState<SeasonMeta | null>(null)
+  const [seasonPage, setSeasonPage] = useState(1)
 
   useEffect(() => {
     let active = true
@@ -71,16 +98,14 @@ export default function LeaderboardPage() {
       })
       .catch(() => active && setYesterdayState('error'))
 
-    fetch('/api/leaderboard/season')
-      .then(async (response) => {
-        if (response.status === 404) {
-          return null
-        }
-        if (!response.ok) {
-          throw new Error('failed')
-        }
-        return (await response.json()) as { season_label: string; entries?: SeasonEntry[] }
-      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const loadSeason = useCallback((page: number) => {
+    let active = true
+    fetchSeason(page)
       .then((body) => {
         if (!active) {
           return
@@ -91,14 +116,22 @@ export default function LeaderboardPage() {
         }
         setSeasonLabel(body.season_label)
         setSeasonEntries(body.entries ?? [])
+        setSeasonMeta(body.meta)
         setSeasonState('ready')
       })
       .catch(() => active && setSeasonState('error'))
-
     return () => {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    const cancel = loadSeason(seasonPage)
+    return cancel
+  }, [loadSeason, seasonPage])
+
+  // True while the requested page is still in flight, so the pager cannot be spammed.
+  const seasonBusy = seasonMeta !== null && seasonMeta.page !== seasonPage
 
   return (
     <div className="min-h-dvh text-bone">
@@ -131,6 +164,9 @@ export default function LeaderboardPage() {
             state={seasonState}
             label={seasonLabel}
             entries={seasonEntries}
+            meta={seasonMeta}
+            busy={seasonBusy}
+            onSelectPage={setSeasonPage}
           />
         </section>
       </main>
@@ -201,11 +237,19 @@ function SeasonBlock({
   state,
   label,
   entries,
+  meta,
+  busy,
+  onSelectPage,
 }: {
   state: SeasonState
   label: string
   entries: SeasonEntry[]
+  meta: SeasonMeta | null
+  busy: boolean
+  onSelectPage: (page: number) => void
 }) {
+  const wallet = meta?.wallet_address?.toLowerCase() ?? null
+
   return (
     <article className="mt-5 rounded-card border border-frost/50 bg-charcoal p-6 shadow-card">
       {state === 'loading' && (
@@ -217,12 +261,19 @@ function SeasonBlock({
       {state === 'error' && <p className="text-[14px] text-error">The season could not be loaded.</p>}
       {state === 'ready' && (
         <>
-          <p className="font-mono text-[11px] uppercase tracking-[-0.02em] text-accent-teal">
-            {label}
-          </p>
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <p className="font-mono text-[11px] uppercase tracking-[-0.02em] text-accent-teal">
+              {label}
+            </p>
+            {meta && meta.total > 0 && (
+              <p className="font-mono text-[10px] uppercase tracking-[-0.02em] text-ash">
+                Page {meta.page} of {meta.total_pages} · {meta.total} ranked wallets
+              </p>
+            )}
+          </div>
           {entries.length === 0 ? (
             <p className="mt-4 text-[14px] text-ash">
-              No relayed runs yet this season, so no points have been earned.
+              No verified runs yet this season, so no points have been earned.
             </p>
           ) : (
             <div className="mt-4 overflow-x-auto">
@@ -236,25 +287,112 @@ function SeasonBlock({
                   </tr>
                 </thead>
                 <tbody>
-                  {entries.map((entry) => (
-                    <tr
-                      key={entry.wallet_address}
-                      className="border-b border-frost/30 font-mono text-[12px] text-bone"
-                    >
-                      <td className="py-2 pr-4 text-accent-amber">
-                        {String(entry.rank).padStart(2, '0')}
-                      </td>
-                      <td className="py-2 pr-4 text-ash">{shortenAddress(entry.wallet_address)}</td>
-                      <td className="py-2 pr-4">{entry.points}</td>
-                      <td className="py-2 text-accent-teal">{entry.reward_amount}</td>
-                    </tr>
-                  ))}
+                  {entries.map((entry) => {
+                    const isSelf = wallet !== null && entry.wallet_address.toLowerCase() === wallet
+                    return (
+                      <tr
+                        key={entry.wallet_address}
+                        aria-current={isSelf ? 'true' : undefined}
+                        className={`border-b border-frost/30 font-mono text-[12px] ${
+                          isSelf ? 'bg-accent-primary/15 text-bone' : 'text-bone'
+                        }`}
+                      >
+                        <td className="py-2 pr-4 text-accent-amber">
+                          {String(entry.rank).padStart(2, '0')}
+                        </td>
+                        <td className={`py-2 pr-4 ${isSelf ? 'text-bone' : 'text-ash'}`}>
+                          {shortenAddress(entry.wallet_address)}
+                          {isSelf && <span className="ml-2 text-accent-soft">(you)</span>}
+                        </td>
+                        <td className="py-2 pr-4">{entry.points}</td>
+                        <td className="py-2 text-accent-teal">
+                          {entry.reward_amount > 0 ? entry.reward_amount.toFixed(2) : '0'}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
           )}
+          {meta && (
+            <SeasonPager
+              page={meta.page}
+              totalPages={meta.total_pages}
+              busy={busy}
+              onSelect={onSelectPage}
+            />
+          )}
         </>
       )}
     </article>
+  )
+}
+
+function SeasonPager({
+  page,
+  totalPages,
+  busy,
+  onSelect,
+}: {
+  page: number
+  totalPages: number
+  busy: boolean
+  onSelect: (page: number) => void
+}) {
+  if (totalPages <= 1) {
+    return null
+  }
+
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1)
+  const stepClass =
+    'inline-flex h-11 min-w-11 items-center justify-center rounded-nav border border-frost px-3 font-mono text-[12px] text-bone transition-colors duration-200 hover:border-bone disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary'
+
+  return (
+    <nav
+      data-section="leaderboard-season-pager"
+      aria-label="Season leaderboard pages"
+      className="mt-5 flex flex-wrap items-center gap-2"
+    >
+      <button
+        type="button"
+        onClick={() => onSelect(page - 1)}
+        disabled={busy || page <= 1}
+        className={stepClass}
+      >
+        Previous
+      </button>
+      <ul className="flex items-center gap-2">
+        {pages.map((number) => {
+          const current = number === page
+          return (
+            <li key={number}>
+              <button
+                type="button"
+                onClick={() => onSelect(number)}
+                disabled={busy}
+                aria-current={current ? 'page' : undefined}
+                aria-label={`Page ${number}`}
+                className={
+                  current
+                    ? 'inline-flex h-11 w-11 items-center justify-center rounded-nav bg-accent-primary font-mono text-[12px] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary'
+                    : 'inline-flex h-11 w-11 items-center justify-center rounded-nav border border-frost font-mono text-[12px] text-bone transition-colors duration-200 hover:border-bone disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary'
+                }
+              >
+                {number}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      <button
+        type="button"
+        onClick={() => onSelect(page + 1)}
+        disabled={busy || page >= totalPages}
+        className={stepClass}
+      >
+        Next
+      </button>
+    </nav>
   )
 }

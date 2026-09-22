@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, lte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, lt, lte, sql } from 'drizzle-orm'
 import { runs, seasons } from '@/db/schema'
 import { getDb } from '@/lib/db/client'
 
@@ -26,29 +26,88 @@ export async function getActiveSeason(today: string): Promise<SeasonRow | null> 
   return row ?? null
 }
 
-export interface RelayedBestRow {
+export interface SeasonBestRow {
   courseDate: string
   walletAddress: string
-  bestTimeMs: number
+  bestScore: number
 }
 
-export async function listRelayedBests(startDate: string, endDate: string): Promise<RelayedBestRow[]> {
+export type SeasonRunStatus = 'verified' | 'relayed'
+
+// One row per wallet per day: that day's best score. Replaying a course cannot farm points because
+// only the day's best counts. Callers choose the statuses: the live board uses verified and relayed,
+// while reward entitlement must stay on relayed only.
+export async function listSeasonDailyBests(
+  startDate: string,
+  endDate: string,
+  statuses: SeasonRunStatus[] = ['verified', 'relayed'],
+): Promise<SeasonBestRow[]> {
   const db = getDb()
-  const rows = await db
+  return db
     .select({
       courseDate: runs.courseDate,
       walletAddress: runs.walletAddress,
-      bestTimeMs: sql<number>`min(${runs.verifiedTimeMs})::int`,
+      bestScore: sql<number>`max(${runs.verifiedScore})::int`,
     })
     .from(runs)
     .where(
       and(
-        eq(runs.status, 'relayed'),
+        inArray(runs.status, statuses),
         gte(runs.courseDate, startDate),
         lte(runs.courseDate, endDate),
       ),
     )
     .groupBy(runs.courseDate, runs.walletAddress)
     .orderBy(asc(runs.courseDate), asc(runs.walletAddress))
-  return rows
+}
+
+export async function getEarliestRunDate(
+  statuses: SeasonRunStatus[] = ['verified', 'relayed'],
+): Promise<string | null> {
+  const db = getDb()
+  const [row] = await db
+    .select({ earliest: sql<string | null>`min(${runs.courseDate})` })
+    .from(runs)
+    .where(inArray(runs.status, statuses))
+  return row?.earliest ?? null
+}
+
+export async function createSeason(input: {
+  label: string
+  startDate: string
+  endDate: string
+  pool: string
+}): Promise<SeasonRow> {
+  const db = getDb()
+  const [row] = await db
+    .insert(seasons)
+    .values({
+      label: input.label,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      pool: input.pool,
+    })
+    .returning()
+  return row
+}
+
+export async function hasSeasonEndingOnOrAfter(date: string): Promise<boolean> {
+  const db = getDb()
+  const [row] = await db
+    .select({ label: seasons.label })
+    .from(seasons)
+    .where(gte(seasons.endDate, date))
+    .limit(1)
+  return Boolean(row)
+}
+
+export async function getSeasonEndingBefore(date: string): Promise<SeasonRow | null> {
+  const db = getDb()
+  const [row] = await db
+    .select()
+    .from(seasons)
+    .where(lt(seasons.endDate, date))
+    .orderBy(desc(seasons.endDate))
+    .limit(1)
+  return row ?? null
 }
