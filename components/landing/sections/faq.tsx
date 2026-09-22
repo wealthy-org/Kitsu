@@ -1,3 +1,8 @@
+'use client'
+
+import { useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+
 const ITEMS = [
   {
     q: 'Is the course really the same for everyone?',
@@ -30,6 +35,10 @@ const ITEMS = [
 ]
 
 export function Faq() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0)
+  const reduce = useReducedMotion()
+  const panelTransition = { duration: reduce ? 0 : 0.28, ease: [0.16, 0.8, 0.3, 1] as const }
+
   return (
     <section id="faq" data-section="faq" className="scroll-mt-20 border-b border-frost/40">
       <div className="mx-auto max-w-3xl px-6 py-20">
@@ -37,29 +46,61 @@ export function Faq() {
         <p className="mt-4 text-[15px] leading-relaxed text-ash">
           Short answers about how runs, verification, and rewards work.
         </p>
-        <div className="mt-8 divide-y divide-frost/40 border-y border-frost/40">
-          {ITEMS.map((item) => (
-            <details key={item.q} className="group">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 py-5 font-display text-[17px] leading-tight text-bone transition-colors duration-150 hover:text-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary [&::-webkit-details-marker]:hidden">
-                {item.q}
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                  className="h-5 w-5 shrink-0 text-ash transition-transform duration-200 group-open:rotate-180"
-                >
-                  <path
-                    d="m6 9 6 6 6-6"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </summary>
-              <p className="pb-5 text-[14px] leading-relaxed text-ash">{item.a}</p>
-            </details>
-          ))}
+        <div className="mt-8 border-y border-frost/40">
+          {ITEMS.map((item, index) => {
+            const isOpen = openIndex === index
+            const panelId = `faq-panel-${index}`
+            const buttonId = `faq-button-${index}`
+            return (
+              <div key={item.q} className="border-b border-frost/40 last:border-b-0">
+                <h3>
+                  <button
+                    type="button"
+                    id={buttonId}
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    onClick={() => setOpenIndex(isOpen ? null : index)}
+                    className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-4 py-5 text-left font-display text-[17px] leading-tight text-bone transition-colors duration-150 hover:text-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                  >
+                    {item.q}
+                    <motion.svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                      animate={{ rotate: isOpen ? 180 : 0 }}
+                      transition={panelTransition}
+                      className="h-5 w-5 shrink-0 text-ash"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </motion.svg>
+                  </button>
+                </h3>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      key="panel"
+                      id={panelId}
+                      role="region"
+                      aria-labelledby={buttonId}
+                      initial={reduce ? false : { height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={reduce ? undefined : { height: 0, opacity: 0 }}
+                      transition={panelTransition}
+                      className="overflow-hidden"
+                    >
+                      <p className="pb-5 text-[14px] leading-relaxed text-ash">{item.a}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )
+          })}
         </div>
       </div>
     </section>

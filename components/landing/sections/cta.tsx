@@ -3,8 +3,21 @@ import { WalletCtaLink } from '@/components/landing/wallet-cta-link'
 
 export function Cta() {
   return (
-    <section id="cta" data-section="cta" className="border-b border-frost/40">
-      <div className="mx-auto max-w-6xl px-6 py-20 text-center">
+    <section
+      id="cta"
+      data-section="cta"
+      className="relative overflow-hidden border-b border-frost/40"
+    >
+      <div
+        aria-hidden="true"
+        className="cta-ping pointer-events-none absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2"
+      >
+        <span className="absolute inset-0 rounded-full border border-accent-primary" />
+        <span className="absolute inset-0 rounded-full border border-accent-primary" />
+        <span className="absolute inset-0 rounded-full border border-accent-primary" />
+      </div>
+
+      <div className="relative mx-auto max-w-6xl px-6 py-20 text-center">
         <h2 className="font-display text-[32px] leading-tight text-bone md:text-[40px]">
           Ready to post a real result?
         </h2>

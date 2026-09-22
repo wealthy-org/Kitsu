@@ -62,53 +62,6 @@
   animation: kitsu-float-up 1s var(--ease-smooth) forwards;
 }
 
-/* Animated border beam on cards (Agora-style, CSS only). */
-@property --beam-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
-
-@keyframes beam-travel {
-  to {
-    --beam-angle: 360deg;
-  }
-}
-
-.beam-ring {
-  position: absolute;
-  inset: 0;
-  padding: 1px;
-  border-radius: inherit;
-  background: conic-gradient(
-    from var(--beam-angle),
-    transparent 0deg 235deg,
-    color-mix(in srgb, var(--color-accent-soft) 55%, transparent) 318deg,
-    color-mix(in srgb, var(--color-accent-teal) 50%, transparent) 344deg,
-    transparent 360deg
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: beam-travel 7s linear infinite;
-  pointer-events: none;
-}
-
-/* Hover-only border beam for the How cards (About keeps the beam always on). */
-.beam-hover {
-  opacity: 0;
-  transition: opacity 300ms var(--ease-smooth);
-}
-
-.group:hover .beam-hover {
-  opacity: 1;
-}
-
 /* Abstract curved-line background (shape and colors from the Notus register background). */
 @keyframes curve-drift {
   0%,
@@ -126,6 +79,35 @@
 
 .curve-float-slow {
   animation: curve-drift 24s ease-in-out infinite reverse;
+}
+
+/* Header anchors glide to their section; the reduced-motion block below forces it back to auto. */
+html {
+  scroll-behavior: smooth;
+}
+
+/* CTA pulse: three rings expanding out of the centre of the section, like the daily seed. */
+@keyframes cta-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(26);
+    opacity: 0;
+  }
+}
+
+.cta-ping span {
+  animation: cta-ping 3.2s var(--ease-smooth) infinite;
+}
+
+.cta-ping span:nth-child(2) {
+  animation-delay: 1.05s;
+}
+
+.cta-ping span:nth-child(3) {
+  animation-delay: 2.1s;
 }
 
 @media (prefers-reduced-motion: reduce) {

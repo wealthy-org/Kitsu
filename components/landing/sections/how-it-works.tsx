@@ -1,4 +1,4 @@
-import { BorderBeam } from '@/components/ui/border-beam'
+import { HowStepper } from '@/components/landing/how-stepper'
 
 const STEPS = [
   {
@@ -35,31 +35,13 @@ export function HowItWorks() {
   return (
     <section id="how" data-section="how" className="scroll-mt-20 border-b border-frost/40">
       <div className="mx-auto max-w-6xl px-6 py-20">
-        <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
-          <div className="lg:sticky lg:top-24 lg:self-start">
-            <h2 className="font-display text-[30px] leading-none text-bone">How it works</h2>
-            <p className="mt-4 max-w-md text-[15px] leading-relaxed text-ash">
-              From the first jump to a seasonal reward, here is the full path of a run. Practice
-              stays wallet-free; the wallet only comes in when you submit an official result.
-            </p>
-          </div>
-          <ol className="grid gap-4 sm:grid-cols-2">
-            {STEPS.map((step, index) => (
-              <li
-                key={step.title}
-                className="group relative rounded-card border border-frost/50 bg-charcoal p-5 shadow-card transition-colors duration-200 hover:border-accent-primary/60 hover:bg-charcoal-hover"
-              >
-                <BorderBeam className="beam-hover" />
-                <span className="font-mono text-[12px] uppercase tracking-[-0.02em] text-accent-soft">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <h3 className="mt-2 font-display text-[18px] leading-tight text-bone">
-                  {step.title}
-                </h3>
-                <p className="mt-2 text-[13px] leading-relaxed text-ash">{step.body}</p>
-              </li>
-            ))}
-          </ol>
+        <h2 className="font-display text-[30px] leading-none text-bone">How it works</h2>
+        <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-ash">
+          From the first jump to a seasonal reward, here is the full path of a run, step by step.
+          Practice stays wallet-free; the wallet only comes in when you submit an official result.
+        </p>
+        <div className="mt-10">
+          <HowStepper steps={STEPS} />
         </div>
       </div>
     </section>

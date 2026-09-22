@@ -37,6 +37,7 @@ secondary stat.
 | --- | --- |
 | Framework | Next.js (App Router), React, TypeScript |
 | Styling | Tailwind CSS v4 with CSS design tokens |
+| Motion | motion (framer-motion), landing interactions only |
 | 3D | three.js + @react-three/fiber |
 | Data | PostgreSQL (Neon serverless) with Drizzle ORM |
 | Web3 | viem, wagmi, SIWE on Robinhood Chain |
@@ -162,6 +163,10 @@ of the production relayer account.
 
 The Tokyo scene is generated procedurally in three.js (no external models). The Polyfork low-poly
 catalog was used only as visual reference for shapes, palette, and proportions.
+
+The landing card stack and the How stepper are adaptations of the Stack and Stepper components from
+[React Bits](https://reactbits.dev) (MIT licensed), restyled with this project's tokens. All other
+UI is original to this repository.
 
 ## License
 
