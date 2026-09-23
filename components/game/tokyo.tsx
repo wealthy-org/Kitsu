@@ -39,11 +39,14 @@ const FLAG_WINDOW = FLAG_STEP * FLAG_COUNT
 const CRATE_STEP = 28
 const CRATE_COUNT = 6
 const CRATE_WINDOW = CRATE_STEP * CRATE_COUNT
+const VEND_STEP = 36
+const VEND_COUNT = 5
+const VEND_WINDOW = VEND_STEP * VEND_COUNT
 
 const BUILDING_COLORS = ['#1b2233', '#20263a', '#171d2b', '#242b40', '#1a2130']
 const SIGN_COLORS = ['#f87171', '#38bdf8', '#fbbf24', '#34d399', '#fb7185']
-const SIDEWALK = '#8fa3b8'
-const METAL = '#2b3245'
+const SIDEWALK = '#94a3b8'
+const METAL = '#5a6782'
 
 function hash(index: number, salt: number): number {
   const value = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453
@@ -57,32 +60,6 @@ function wrap(value: number, windowSize: number): number {
 // Keeps every instance in front of the camera until it passes behind it, then recycles far ahead.
 function propZ(index: number, step: number, windowSize: number, distance: number, behind: number) {
   return behind - wrap(index * step - distance, windowSize)
-}
-
-function windowsTexture(): THREE.Texture {
-  const size = 64
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')
-  if (ctx) {
-    ctx.fillStyle = '#0b1020'
-    ctx.fillRect(0, 0, size, size)
-    for (let y = 0; y < 8; y += 1) {
-      for (let x = 0; x < 8; x += 1) {
-        const on = (x * 7 + y * 3) % 5 !== 0
-        ctx.fillStyle = on ? 'rgba(255,236,180,0.95)' : 'rgba(96,120,165,0.4)'
-        ctx.fillRect(x * 8 + 2, y * 8 + 2, 4.4, 4.4)
-      }
-    }
-  }
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.wrapS = THREE.RepeatWrapping
-  texture.wrapT = THREE.RepeatWrapping
-  texture.minFilter = THREE.LinearMipmapLinearFilter
-  texture.magFilter = THREE.LinearFilter
-  texture.anisotropy = 16
-  return texture
 }
 
 function skyTexture(): THREE.Texture {
@@ -119,7 +96,6 @@ export function SkyDome() {
 }
 
 export function Skyline() {
-  const texture = useMemo(() => windowsTexture(), [])
   const buildings = useMemo(
     () =>
       Array.from({ length: 30 }, (_, index) => {
@@ -136,7 +112,7 @@ export function Skyline() {
       {buildings.map((building, index) => (
         <mesh key={index} position={[building.x, building.height / 2, 0]}>
           <boxGeometry args={[building.width, building.height, 6]} />
-          <meshStandardMaterial map={texture} color="#141a29" roughness={1} />
+          <meshStandardMaterial color="#141a29" roughness={0.85} />
         </mesh>
       ))}
     </group>
@@ -167,7 +143,59 @@ function Lamp() {
       </mesh>
       <mesh position={[1.5, 4.15, 0]}>
         <boxGeometry args={[0.55, 0.22, 0.34]} />
-        <meshStandardMaterial color="#ffe9a8" roughness={0.6} />
+        <meshStandardMaterial
+          color="#fffbeb"
+          emissive="#fde68a"
+          emissiveIntensity={0.85}
+          roughness={0.3}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+function VendingMachine({ color }: { color: string }) {
+  return (
+    <group>
+      {/* Main cabinet */}
+      <mesh position={[0, 0.9, 0]}>
+        <boxGeometry args={[0.85, 1.8, 0.8]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      {/* Top illuminated brand panel */}
+      <mesh position={[0.43, 1.55, 0]}>
+        <boxGeometry args={[0.05, 0.3, 0.7]} />
+        <meshStandardMaterial
+          color="#38bdf8"
+          emissive="#0284c7"
+          emissiveIntensity={0.8}
+          roughness={0.2}
+        />
+      </mesh>
+      {/* Illuminated drink showcase window */}
+      <mesh position={[0.43, 0.95, 0]}>
+        <boxGeometry args={[0.05, 0.75, 0.7]} />
+        <meshStandardMaterial
+          color="#fde68a"
+          emissive="#d97706"
+          emissiveIntensity={0.65}
+          roughness={0.3}
+        />
+      </mesh>
+      {/* Selection buttons */}
+      <mesh position={[0.43, 0.48, 0]}>
+        <boxGeometry args={[0.04, 0.08, 0.65]} />
+        <meshStandardMaterial
+          color="#34d399"
+          emissive="#059669"
+          emissiveIntensity={0.7}
+          roughness={0.4}
+        />
+      </mesh>
+      {/* Dispenser bay */}
+      <mesh position={[0.43, 0.22, 0]}>
+        <boxGeometry args={[0.06, 0.25, 0.55]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.8} />
       </mesh>
     </group>
   )
@@ -297,6 +325,7 @@ function Row({
   getX,
   getY,
   offset,
+  dualSide = false,
   children,
 }: {
   count: number
@@ -306,6 +335,7 @@ function Row({
   getX: (index: number) => number
   getY?: (index: number) => number
   offset: number
+  dualSide?: boolean
   children: (index: number) => React.ReactNode
 }) {
   const refs = useRef<Array<THREE.Group | null>>([])
@@ -315,7 +345,8 @@ function Row({
     for (let index = 0; index < count; index += 1) {
       const group = refs.current[index]
       if (group) {
-        group.position.z = propZ(index, step, windowSize, distance, offset)
+        const stepIndex = dualSide ? Math.floor(index / 2) : index
+        group.position.z = propZ(stepIndex, step, windowSize, distance, offset)
       }
     }
   })
@@ -339,14 +370,14 @@ function Row({
 
 export function CityProps({ stateRef }: { stateRef: React.RefObject<RunState> }) {
   const buildingRefs = useRef<Array<THREE.Group | null>>([])
-  const texture = useMemo(() => windowsTexture(), [])
 
   useFrame(() => {
     const distance = stateRef.current?.distance ?? 0
     for (let index = 0; index < BUILDING_COUNT * 2; index += 1) {
       const group = buildingRefs.current[index]
       if (group) {
-        group.position.z = propZ(index, BUILDING_STEP, BUILDING_WINDOW, distance, 16)
+        const stepIndex = Math.floor(index / 2)
+        group.position.z = propZ(stepIndex, BUILDING_STEP, BUILDING_WINDOW, distance, 16)
       }
     }
   })
@@ -354,12 +385,29 @@ export function CityProps({ stateRef }: { stateRef: React.RefObject<RunState> })
   return (
     <group>
       <Row
+        count={VEND_COUNT * 2}
+        step={VEND_STEP}
+        windowSize={VEND_WINDOW}
+        stateRef={stateRef}
+        getX={(index) => (index % 2 === 0 ? -1 : 1) * (TRACK_WIDTH / 2 + 1.8)}
+        offset={BEHIND}
+        dualSide
+      >
+        {(index) => (
+          <group rotation={[0, index % 2 === 0 ? 0 : Math.PI, 0]}>
+            <VendingMachine color={index % 2 === 0 ? '#1e293b' : '#831843'} />
+          </group>
+        )}
+      </Row>
+
+      <Row
         count={LAMP_COUNT * 2}
         step={LAMP_STEP}
         windowSize={LAMP_WINDOW}
         stateRef={stateRef}
         getX={(index) => (index % 2 === 0 ? -1 : 1) * (TRACK_WIDTH / 2 + 0.9)}
         offset={BEHIND}
+        dualSide
       >
         {(index) => (
           <group rotation={[0, index % 2 === 0 ? 0 : Math.PI, 0]}>
@@ -386,6 +434,7 @@ export function CityProps({ stateRef }: { stateRef: React.RefObject<RunState> })
         stateRef={stateRef}
         getX={(index) => (index % 2 === 0 ? -1 : 1) * (TRACK_WIDTH / 2 + 1.6)}
         offset={BEHIND}
+        dualSide
       >
         {(index) => (
           <group rotation={[0, index % 2 === 0 ? 0 : Math.PI, 0]}>
@@ -401,6 +450,7 @@ export function CityProps({ stateRef }: { stateRef: React.RefObject<RunState> })
         stateRef={stateRef}
         getX={(index) => (index % 2 === 0 ? -1 : 1) * (TRACK_WIDTH / 2 + 1.7)}
         offset={BEHIND}
+        dualSide
       >
         {() => <Planter />}
       </Row>
@@ -412,6 +462,7 @@ export function CityProps({ stateRef }: { stateRef: React.RefObject<RunState> })
         stateRef={stateRef}
         getX={(index) => (index % 2 === 0 ? -1 : 1) * (TRACK_WIDTH / 2 + 1.7)}
         offset={BEHIND}
+        dualSide
       >
         {(index) => (
           <group rotation={[0, index % 2 === 0 ? 0 : Math.PI, 0]}>
@@ -450,6 +501,7 @@ export function CityProps({ stateRef }: { stateRef: React.RefObject<RunState> })
         stateRef={stateRef}
         getX={(index) => (index % 2 === 0 ? -1 : 1) * (TRACK_WIDTH / 2 + 1.6)}
         offset={BEHIND}
+        dualSide
       >
         {(index) => <FlagPole banner={index % 4 === 1 || index % 4 === 3} />}
       </Row>
@@ -461,6 +513,7 @@ export function CityProps({ stateRef }: { stateRef: React.RefObject<RunState> })
         stateRef={stateRef}
         getX={(index) => (index % 2 === 0 ? -1 : 1) * (TRACK_WIDTH / 2 + 2.6)}
         offset={BEHIND}
+        dualSide
       >
         {() => <Crate />}
       </Row>
@@ -484,16 +537,22 @@ export function CityProps({ stateRef }: { stateRef: React.RefObject<RunState> })
             <mesh position={[0, height / 2, 0]}>
               <boxGeometry args={[width, height, depth]} />
               <meshStandardMaterial
-                map={texture}
                 color={color}
-                roughness={0.9}
+                roughness={0.7}
+                metalness={0.15}
               />
             </mesh>
+            {/* 3D Emissive Billboard Box — colorful accent boxes matching Tokyo cyber vibe */}
             <mesh
-              position={[side * -width * 0.35, 3 + hash(index, 6) * (height - 6), depth / 2 + 0.05]}
+              position={[side * -width * 0.35, 3 + hash(index, 6) * (height - 6), depth / 2 + 0.12]}
             >
-              <planeGeometry args={[width * 0.55, 1.8]} />
-              <meshStandardMaterial color={signColor} transparent opacity={0.55} />
+              <boxGeometry args={[width * 0.55, 2.0, 0.16]} />
+              <meshStandardMaterial
+                color={signColor}
+                emissive={signColor}
+                emissiveIntensity={0.8}
+                roughness={0.2}
+              />
             </mesh>
           </group>
         )

@@ -62,7 +62,7 @@
   animation: kitsu-float-up 1s var(--ease-smooth) forwards;
 }
 
-/* Abstract curved-line background (shape and colors from the Notus register background). */
+/* Floating Tokyo billboard neon boxes background (matching the building accent boxes in /play). */
 @keyframes curve-drift {
   0%,
   100% {

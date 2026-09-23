@@ -8,9 +8,6 @@ import { laneNameToIndex, movingObstacleLaneIndex } from '@/sim/collision'
 import type { RunState } from '@/sim/run'
 import type { Course, CourseSegment } from '@/sim/types'
 
-const FROST = '#e2e2e2'
-const AMBER = '#f59e0b'
-
 const TRACK_WIDTH = LANE_WIDTH * 3
 const FRONT_OFFSET = 0
 
@@ -53,118 +50,192 @@ function stripeBar(
   )
 }
 
-// Tall solid wall: the player must jump over it (PROJECT.md §1.6). The panel is solid, so it
-// cannot read as a slide opening.
+// Tall solid barrier: the player must jump over it (PROJECT.md §1.6).
 function barrierHigh() {
   return (
     <group>
+      {/* Heavy base frame */}
       <mesh position={[0, 0.45, 0]}>
         <boxGeometry args={[TRACK_WIDTH * 0.98, 0.9, 0.32]} />
-        <meshStandardMaterial color="#1f2937" roughness={0.85} />
+        <meshStandardMaterial color="#111827" roughness={0.85} />
       </mesh>
-      {stripeBar(TRACK_WIDTH * 0.98, 0.9, 0.36, 0.45, 12, '#f59e0b', '#111827')}
+      {/* High-visibility diagonal hazard stripes */}
+      {stripeBar(TRACK_WIDTH * 0.98, 0.88, 0.36, 0.45, 14, '#f59e0b', '#0f172a')}
+      {/* Reinforced vertical posts with glowing hazard beacon lights */}
       {[-1, 1].map((side) => (
-        <mesh key={side} position={[side * TRACK_WIDTH * 0.46, 0.5, 0]}>
-          <boxGeometry args={[0.16, 1.0, 0.16]} />
-          <meshStandardMaterial color="#f59e0b" roughness={0.6} />
-        </mesh>
+        <group key={`post-${side}`} position={[side * TRACK_WIDTH * 0.47, 0, 0]}>
+          <mesh position={[0, 0.55, 0]}>
+            <boxGeometry args={[0.2, 1.1, 0.2]} />
+            <meshStandardMaterial color="#374151" roughness={0.6} metalness={0.4} />
+          </mesh>
+          {/* Glowing amber beacon strobe */}
+          <mesh position={[0, 1.15, 0]}>
+            <cylinderGeometry args={[0.1, 0.12, 0.18, 12]} />
+            <meshStandardMaterial
+              color="#f59e0b"
+              emissive="#f59e0b"
+              emissiveIntensity={0.9}
+              roughness={0.2}
+            />
+          </mesh>
+        </group>
       ))}
     </group>
   )
 }
 
-// Elevated beam with open space underneath: the player must slide under it (PROJECT.md §1.6).
+// Elevated gantry beam with generous open space underneath: player must slide under it (PROJECT.md §1.6).
+// No downward arrows per user directive; clean hazard beam with overhead clearance guide.
 function barrierLow() {
   return (
     <group>
+      {/* Tall roadside support trusses */}
       {[-1, 1].map((side) => (
-        <mesh key={side} position={[side * TRACK_WIDTH * 0.46, 0.95, 0]}>
-          <boxGeometry args={[0.18, 1.9, 0.18]} />
-          <meshStandardMaterial color="#94a3b8" roughness={0.7} />
-        </mesh>
+        <group key={`truss-${side}`} position={[side * TRACK_WIDTH * 0.48, 0, 0]}>
+          <mesh position={[0, 1.1, 0]}>
+            <boxGeometry args={[0.22, 2.2, 0.22]} />
+            <meshStandardMaterial color="#1f2937" roughness={0.7} metalness={0.3} />
+          </mesh>
+        </group>
       ))}
-      <mesh position={[0, 1.6, 0]}>
-        <boxGeometry args={[TRACK_WIDTH * 0.98, 0.34, 0.32]} />
-        <meshStandardMaterial color="#7f1d1d" roughness={0.85} />
+      {/* Overhead barrier body at y = 1.65m (leaves 0 to 1.45m completely clear for sliding) */}
+      <mesh position={[0, 1.68, 0]}>
+        <boxGeometry args={[TRACK_WIDTH * 0.98, 0.42, 0.34]} />
+        <meshStandardMaterial color="#18181b" roughness={0.8} />
       </mesh>
-      {stripeBar(TRACK_WIDTH * 0.98, 0.34, 0.36, 1.6, 14, '#ef4444', '#f1f5f9')}
+      {/* Hazard stripe fascia on the overhead beam */}
+      {stripeBar(TRACK_WIDTH * 0.98, 0.4, 0.38, 1.68, 16, '#ef4444', '#f8fafc')}
+      {/* Horizontal bottom clearance LED strip (guides runner's eye) */}
+      <mesh position={[0, 1.46, 0.19]}>
+        <boxGeometry args={[TRACK_WIDTH * 0.96, 0.05, 0.04]} />
+        <meshStandardMaterial
+          color="#38bdf8"
+          emissive="#0284c7"
+          emissiveIntensity={0.85}
+          roughness={0.2}
+        />
+      </mesh>
     </group>
   )
 }
 
-// City bus blocking a lane. The front faces the player (+Z): windshield, destination sign, and
-// headlights sit just outside the body so nothing z-fights.
+// Tokyo city transit bus blocking a lane. Aerodynamic front, route display, glowing headlights.
 function laneBlock(lane: number) {
   const color = BUS_COLORS[lane % BUS_COLORS.length]
   return (
     <group position={[LANE_OFFSETS[lane], 0, 0]}>
+      {/* Main Bus Body */}
       <mesh position={[0, 1.25, 0]}>
         <boxGeometry args={[LANE_WIDTH * 0.92, 2.0, 6]} />
-        <meshStandardMaterial color={color} roughness={0.55} metalness={0.1} />
+        <meshStandardMaterial color={color} roughness={0.5} metalness={0.2} />
       </mesh>
-      <mesh position={[0, 1.75, 3.03]}>
-        <boxGeometry args={[LANE_WIDTH * 0.83, 0.85, 0.1]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.35} />
+      {/* Contrast accent trim strip */}
+      <mesh position={[0, 0.85, 0]}>
+        <boxGeometry args={[LANE_WIDTH * 0.94, 0.22, 6.02]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.4} />
       </mesh>
-      <mesh position={[0, 2.45, 3.06]}>
-        <boxGeometry args={[LANE_WIDTH * 0.6, 0.3, 0.08]} />
-        <meshStandardMaterial color="#fde68a" roughness={0.6} />
+      {/* Windshield */}
+      <mesh position={[0, 1.78, 3.02]}>
+        <boxGeometry args={[LANE_WIDTH * 0.84, 0.8, 0.08]} />
+        <meshStandardMaterial color="#090d16" roughness={0.15} metalness={0.8} />
       </mesh>
-      {[-0.6, 0.6].map((x) => (
-        <mesh key={`headlight-${x}`} position={[x, 0.8, 3.06]}>
-          <boxGeometry args={[0.3, 0.2, 0.08]} />
-          <meshStandardMaterial color="#fff7cc" roughness={0.4} />
+      {/* Digital LED Route Destination Board ("KITSU LINE") */}
+      <mesh position={[0, 2.42, 3.05]}>
+        <boxGeometry args={[LANE_WIDTH * 0.65, 0.25, 0.08]} />
+        <meshStandardMaterial
+          color="#fbbf24"
+          emissive="#d97706"
+          emissiveIntensity={0.9}
+          roughness={0.3}
+        />
+      </mesh>
+      {/* Glowing Dual LED Headlights */}
+      {[-0.65, 0.65].map((x) => (
+        <mesh key={`headlight-${x}`} position={[x, 0.65, 3.04]}>
+          <boxGeometry args={[0.34, 0.2, 0.08]} />
+          <meshStandardMaterial
+            color="#ffffff"
+            emissive="#fef08a"
+            emissiveIntensity={0.95}
+            roughness={0.2}
+          />
         </mesh>
       ))}
+      {/* Side Passenger Windows */}
       {[-1, 1].map((side) => (
-        <mesh key={`side-window-${side}`} position={[side * LANE_WIDTH * 0.47, 1.8, 0]}>
-          <boxGeometry args={[0.06, 0.7, 4.4]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.35} />
+        <mesh key={`side-window-${side}`} position={[side * LANE_WIDTH * 0.47, 1.78, 0]}>
+          <boxGeometry args={[0.06, 0.72, 4.6]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.2} metalness={0.7} />
         </mesh>
       ))}
-      <mesh position={[0, 2.35, -0.6]}>
-        <boxGeometry args={[LANE_WIDTH * 0.7, 0.2, 2.2]} />
+      {/* Roof air conditioner unit */}
+      <mesh position={[0, 2.36, -0.6]}>
+        <boxGeometry args={[LANE_WIDTH * 0.65, 0.22, 2.4]} />
         <meshStandardMaterial color="#334155" roughness={0.7} />
       </mesh>
+      {/* Wheels with dark rubber and rim hubcaps */}
       {[-2, 2].map((z) =>
         [-1, 1].map((side) => (
-          <mesh
-            key={`wheel-${z}-${side}`}
-            position={[side * LANE_WIDTH * 0.46, 0.42, z]}
-            rotation={[0, 0, Math.PI / 2]}
-          >
-            <cylinderGeometry args={[0.42, 0.42, 0.24, 12]} />
-            <meshStandardMaterial color="#111827" roughness={0.9} />
-          </mesh>
+          <group key={`wheel-${z}-${side}`} position={[side * LANE_WIDTH * 0.46, 0.42, z]}>
+            <mesh rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.42, 0.42, 0.24, 14]} />
+              <meshStandardMaterial color="#090d16" roughness={0.9} />
+            </mesh>
+            <mesh position={[side * 0.13, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.2, 0.2, 0.02, 10]} />
+              <meshStandardMaterial color="#94a3b8" roughness={0.4} metalness={0.6} />
+            </mesh>
+          </group>
         )),
       )}
     </group>
   )
 }
 
-// Broken road (pothole) section: one rough asphalt patch with a little rubble. Always blocks the
-// full width. The engine treats it as the PROJECT.md gap.
+// Broken road / pothole chasm with jagged asphalt and roadside hazard markers. Always blocks full width.
 function gapVisual(width: number) {
   return (
     <group position={[0, 0, -width / 2]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+      {/* Dark chasm pit beneath track */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 0]}>
         <planeGeometry args={[TRACK_WIDTH, width]} />
-        <meshStandardMaterial color="#161a20" roughness={1} />
+        <meshStandardMaterial color="#020408" roughness={1} />
       </mesh>
-      {[-1.6, 0, 1.6].map((x, index) => (
+      {/* Fractured jagged road slabs */}
+      {[-2, -0.7, 0.7, 2].map((x, index) => (
         <mesh
-          key={`rubble-${x}`}
-          position={[x, 0.1, (index - 1) * 0.6]}
-          rotation={[0.3, index * 0.7, 0.2]}
+          key={`slab-${x}`}
+          position={[x, 0.02, (index % 2 === 0 ? -1 : 1) * (width * 0.25)]}
+          rotation={[0.08, index * 0.6, 0.04]}
         >
-          <boxGeometry args={[0.4, 0.18, 0.5]} />
-          <meshStandardMaterial color="#3b3f49" roughness={1} />
+          <boxGeometry args={[1.1, 0.14, width * 0.45]} />
+          <meshStandardMaterial color="#1f242d" roughness={0.95} />
         </mesh>
+      ))}
+      {/* Roadside warning cones at fissure edges */}
+      {[-1, 1].map((side) => (
+        <group key={`cone-${side}`} position={[side * (TRACK_WIDTH / 2 - 0.2), 0, 0]}>
+          <mesh position={[0, 0.28, 0]}>
+            <coneGeometry args={[0.18, 0.55, 12]} />
+            <meshStandardMaterial
+              color="#f97316"
+              emissive="#ea580c"
+              emissiveIntensity={0.6}
+              roughness={0.4}
+            />
+          </mesh>
+          {/* Reflective cone collar */}
+          <mesh position={[0, 0.24, 0]}>
+            <coneGeometry args={[0.13, 0.14, 12]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.2} />
+          </mesh>
+        </group>
       ))}
     </group>
   )
 }
 
+// Shiba Paw Arcade Coin: golden beveled coin with raised paw insignia and warm metallic sheen.
 function CoinRow({
   lane,
   segmentIndex,
@@ -186,21 +257,59 @@ function CoinRow({
     group.visible = !collected
     if (!collected) {
       const tick = state?.tick ?? 0
-      group.rotation.y = tick * 0.06
-      group.position.y = Math.sin(tick * 0.1) * 0.06
+      group.rotation.y = tick * 0.07
+      group.position.y = Math.sin(tick * 0.12) * 0.08
     }
   })
 
   return (
     <group ref={groupRef} position={[LANE_OFFSETS[lane], 0, -FRONT_OFFSET]}>
-      <mesh position={[0, 0.7, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.32, 0.32, 0.08, 16]} />
-        <meshStandardMaterial color={AMBER} roughness={0.4} metalness={0.2} />
-      </mesh>
+      <group position={[0, 0.75, 0]}>
+        {/* Main Coin Disc */}
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.34, 0.34, 0.08, 20]} />
+          <meshStandardMaterial
+            color="#f59e0b"
+            emissive="#d97706"
+            emissiveIntensity={0.4}
+            metalness={0.7}
+            roughness={0.3}
+          />
+        </mesh>
+        {/* Raised Beveled Rim */}
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.36, 0.36, 0.04, 20]} />
+          <meshStandardMaterial
+            color="#fbbf24"
+            emissive="#b45309"
+            emissiveIntensity={0.4}
+            metalness={0.8}
+            roughness={0.25}
+          />
+        </mesh>
+        {/* Shiba Paw Center Pad (Front & Back) */}
+        {[-0.042, 0.042].map((z) => (
+          <group key={`paw-${z}`} position={[0, 0, z]}>
+            {/* Main palm pad */}
+            <mesh position={[0, -0.04, 0]}>
+              <cylinderGeometry args={[0.1, 0.1, 0.015, 12]} />
+              <meshStandardMaterial color="#fef3c7" roughness={0.3} metalness={0.5} />
+            </mesh>
+            {/* 3 Toe pads */}
+            {[-0.09, 0, 0.09].map((tx, idx) => (
+              <mesh key={`toe-${idx}`} position={[tx, 0.08 + (idx === 1 ? 0.03 : 0), 0]}>
+                <cylinderGeometry args={[0.04, 0.04, 0.015, 8]} />
+                <meshStandardMaterial color="#fef3c7" roughness={0.3} metalness={0.5} />
+              </mesh>
+            ))}
+          </group>
+        ))}
+      </group>
     </group>
   )
 }
 
+// Dynamic compact car shifting lanes with glowing headlights and turn blinkers.
 function MovingObstacle({
   segment,
   stateRef,
@@ -217,38 +326,71 @@ function MovingObstacle({
     const lane = movingObstacleLaneIndex(segment, tick)
     groupRef.current.position.x = LANE_OFFSETS[lane]
   })
+
   return (
     <group
       ref={groupRef}
       position={[LANE_OFFSETS[laneNameToIndex(segment.lane ?? 'center')], 0, 0]}
     >
+      {/* Car Body Chassis */}
       <mesh position={[0, 0.65, 0]}>
-        <boxGeometry args={[LANE_WIDTH * 0.8, 0.8, 3.6]} />
-        <meshStandardMaterial color={FROST} roughness={0.5} metalness={0.15} />
+        <boxGeometry args={[LANE_WIDTH * 0.82, 0.78, 3.8]} />
+        <meshStandardMaterial color="#334155" roughness={0.4} metalness={0.3} />
       </mesh>
-      <mesh position={[0, 1.3, -0.35]}>
-        <boxGeometry args={[LANE_WIDTH * 0.7, 0.6, 1.7]} />
-        <meshStandardMaterial color="#e2e8f0" roughness={0.5} />
+      {/* Cabin Roof & Windows */}
+      <mesh position={[0, 1.28, -0.3]}>
+        <boxGeometry args={[LANE_WIDTH * 0.72, 0.58, 1.8]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.2} metalness={0.7} />
       </mesh>
-      <mesh position={[0, 1.25, 0.52]}>
-        <boxGeometry args={[LANE_WIDTH * 0.62, 0.5, 0.08]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.35} />
-      </mesh>
-      {[-0.45, 0.45].map((x) => (
-        <mesh key={`car-headlight-${x}`} position={[x, 0.7, 1.84]}>
-          <boxGeometry args={[0.28, 0.16, 0.08]} />
-          <meshStandardMaterial color="#fff7cc" roughness={0.4} />
+      {/* Glowing Dual Headlights */}
+      {[-0.5, 0.5].map((x) => (
+        <mesh key={`car-headlight-${x}`} position={[x, 0.65, 1.92]}>
+          <boxGeometry args={[0.26, 0.16, 0.06]} />
+          <meshStandardMaterial
+            color="#ffffff"
+            emissive="#fef08a"
+            emissiveIntensity={0.95}
+            roughness={0.2}
+          />
         </mesh>
       ))}
+      {/* Amber Directional Indicators / Blinkers */}
+      {[-1, 1].map((side) => (
+        <mesh
+          key={`blinker-${side}`}
+          position={[side * (LANE_WIDTH * 0.42), 0.68, 1.8]}
+        >
+          <boxGeometry args={[0.06, 0.12, 0.22]} />
+          <meshStandardMaterial
+            color="#f59e0b"
+            emissive="#d97706"
+            emissiveIntensity={0.8}
+            roughness={0.3}
+          />
+        </mesh>
+      ))}
+      {/* Rear Taillights */}
+      {[-0.5, 0.5].map((x) => (
+        <mesh key={`car-taillight-${x}`} position={[x, 0.65, -1.92]}>
+          <boxGeometry args={[0.26, 0.14, 0.06]} />
+          <meshStandardMaterial
+            color="#ef4444"
+            emissive="#dc2626"
+            emissiveIntensity={0.85}
+            roughness={0.3}
+          />
+        </mesh>
+      ))}
+      {/* 4 Wheels */}
       {[1.15, -1.15].map((z) =>
         [-1, 1].map((side) => (
           <mesh
             key={`car-wheel-${z}-${side}`}
-            position={[side * LANE_WIDTH * 0.36, 0.32, z]}
+            position={[side * LANE_WIDTH * 0.38, 0.34, z]}
             rotation={[0, 0, Math.PI / 2]}
           >
-            <cylinderGeometry args={[0.32, 0.32, 0.2, 12]} />
-            <meshStandardMaterial color="#0b0f1a" roughness={0.9} />
+            <cylinderGeometry args={[0.34, 0.34, 0.22, 14]} />
+            <meshStandardMaterial color="#090d16" roughness={0.9} />
           </mesh>
         )),
       )}
@@ -256,45 +398,128 @@ function MovingObstacle({
   )
 }
 
-// Half-3D house at the finish: the Shiba is home (PROJECT.md §1.6).
+// Finish Landmark: Option C — Neo-Tokyo Cube House.
+// Contemporary geometric modernist cube architecture with warm corner ribbon window,
+// entrance canopy, digital house number (#01), and floating roof LED trim.
 function finishHouse() {
   return (
     <group>
-      <mesh position={[0, 1.5, 0]}>
-        <boxGeometry args={[5, 3, 4.4]} />
-        <meshStandardMaterial color="#8a6f5a" roughness={0.9} />
+      {/* Ground Floor Main Pavilion Cube */}
+      <mesh position={[0, 1.8, 0]}>
+        <boxGeometry args={[6.2, 3.6, 5.2]} />
+        <meshStandardMaterial color="#1a202c" roughness={0.85} metalness={0.15} />
       </mesh>
-      {[-1, 1].map((side) => (
-        <mesh
-          key={side}
-          position={[0, 3.7, side * 1.15]}
-          rotation={[side * 0.72, 0, 0]}
-        >
-          <boxGeometry args={[5.2, 0.2, 3]} />
-          <meshStandardMaterial color="#5b3f35" roughness={0.9} />
-        </mesh>
-      ))}
-      <mesh position={[0, 1.0, 2.25]}>
-        <boxGeometry args={[1.1, 2, 0.16]} />
-        <meshStandardMaterial color="#3b2a22" roughness={0.8} />
+
+      {/* Second Floor Offset Geometric Cube */}
+      <mesh position={[0.8, 4.4, -0.4]}>
+        <boxGeometry args={[4.4, 2.2, 4.2]} />
+        <meshStandardMaterial color="#2d3748" roughness={0.8} metalness={0.2} />
       </mesh>
-      {[-1.6, 1.6].map((x) => (
-        <mesh key={x} position={[x, 1.7, 2.25]}>
-          <boxGeometry args={[1, 1, 0.14]} />
-          <meshStandardMaterial color="#ffe9a8" transparent opacity={0.6} />
+
+      {/* Warm Corner Glass Ribbon Window (Wraps Front & Right) */}
+      <mesh position={[1.4, 1.8, 2.62]}>
+        <boxGeometry args={[2.8, 2.2, 0.08]} />
+        <meshStandardMaterial
+          color="#fef08a"
+          emissive="#f59e0b"
+          emissiveIntensity={0.8}
+          roughness={0.2}
+          transparent
+          opacity={0.85}
+        />
+      </mesh>
+      <mesh position={[3.12, 1.8, 1.4]}>
+        <boxGeometry args={[0.08, 2.2, 2.4]} />
+        <meshStandardMaterial
+          color="#fef08a"
+          emissive="#f59e0b"
+          emissiveIntensity={0.8}
+          roughness={0.2}
+          transparent
+          opacity={0.85}
+        />
+      </mesh>
+
+      {/* Upper Floor Sleek Strip Window */}
+      <mesh position={[0.8, 4.5, 1.72]}>
+        <boxGeometry args={[3.6, 0.8, 0.08]} />
+        <meshStandardMaterial
+          color="#38bdf8"
+          emissive="#0284c7"
+          emissiveIntensity={0.7}
+          roughness={0.2}
+          transparent
+          opacity={0.85}
+        />
+      </mesh>
+
+      {/* Entrance Foyer & Modern Doorway */}
+      <group position={[-1.6, 0, 2.62]}>
+        {/* Recessed Timber Porch */}
+        <mesh position={[0, 1.25, 0.02]}>
+          <boxGeometry args={[1.5, 2.5, 0.12]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.7} />
         </mesh>
-      ))}
-      {[-1, 1].map((x) => (
-        <mesh key={`lamp-${x}`} position={[x * 3.4, 0.55, 2.6]}>
-          <boxGeometry args={[0.12, 1.1, 0.12]} />
-          <meshStandardMaterial color="#2b3245" roughness={0.8} />
+        {/* Modern Dark Wood Door */}
+        <mesh position={[0, 1.1, 0.08]}>
+          <boxGeometry args={[1.1, 2.2, 0.08]} />
+          <meshStandardMaterial color="#3e2723" roughness={0.6} />
         </mesh>
-      ))}
-      {[-1, 1].map((x) => (
-        <mesh key={`glow-${x}`} position={[x * 3.4, 1.15, 2.6]}>
-          <sphereGeometry args={[0.22, 12, 12]} />
-          <meshStandardMaterial color="#ffe9a8" transparent opacity={0.5} />
+        {/* Floating Entrance Canopy */}
+        <mesh position={[0, 2.45, 0.45]}>
+          <boxGeometry args={[2.0, 0.12, 1.1]} />
+          <meshStandardMaterial color="#111827" roughness={0.5} />
         </mesh>
+        {/* Porch Welcome Light */}
+        <mesh position={[0, 2.36, 0.45]}>
+          <boxGeometry args={[0.8, 0.03, 0.5]} />
+          <meshStandardMaterial
+            color="#fffbeb"
+            emissive="#fef3c7"
+            emissiveIntensity={0.9}
+            roughness={0.2}
+          />
+        </mesh>
+        {/* Digital House Number Plaque ("#01 KITSU") */}
+        <mesh position={[-0.85, 1.5, 0.08]}>
+          <boxGeometry args={[0.42, 0.28, 0.04]} />
+          <meshStandardMaterial
+            color="#14b8a6"
+            emissive="#0d9488"
+            emissiveIntensity={0.85}
+            roughness={0.3}
+          />
+        </mesh>
+      </group>
+
+      {/* Modern Cantilever Roof with LED Perimeter Glow */}
+      <mesh position={[0, 3.66, 0.1]}>
+        <boxGeometry args={[6.6, 0.14, 5.5]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.5} metalness={0.3} />
+      </mesh>
+      {/* Cyan/Teal LED Glow Strip along Roofline */}
+      <mesh position={[0, 3.6, 2.87]}>
+        <boxGeometry args={[6.5, 0.05, 0.04]} />
+        <meshStandardMaterial
+          color="#2dd4bf"
+          emissive="#14b8a6"
+          emissiveIntensity={0.85}
+          roughness={0.2}
+        />
+      </mesh>
+
+      {/* Minimalist Architectural Planters with Manicured Shrubs (Left & Right) */}
+      {[-3.6, 3.6].map((x) => (
+        <group key={`planter-${x}`} position={[x, 0, 2.6]}>
+          <mesh position={[0, 0.4, 0]}>
+            <boxGeometry args={[0.8, 0.8, 0.8]} />
+            <meshStandardMaterial color="#374151" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 1.0, 0]}>
+            <sphereGeometry args={[0.45, 12, 12]} />
+            <meshStandardMaterial color="#166534" roughness={0.8} />
+          </mesh>
+        </group>
       ))}
     </group>
   )

@@ -6,10 +6,10 @@ import { AnimatePresence, motion, type PanInfo, type Variants } from 'motion/rea
 import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 
 const SLIDES = [
-  { src: '/course-preview/start-line.webp', label: 'Start line' },
-  { src: '/course-preview/mid-city.webp', label: 'Mid-city' },
-  { src: '/course-preview/obstacles-ahead.webp', label: 'Obstacles ahead' },
-  { src: '/course-preview/kitsu-ready.webp', label: 'Kitsu at the ready' },
+  { src: '/course-preview/hero-launch.webp', label: 'The launch' },
+  { src: '/course-preview/hero-leap.webp', label: 'The leap' },
+  { src: '/course-preview/hero-evade.webp', label: 'Speed evade' },
+  { src: '/course-preview/hero-home.webp', label: 'Arrival home' },
 ]
 
 const AUTO_DELAY_MS = 5000

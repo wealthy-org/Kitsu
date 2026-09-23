@@ -10,12 +10,12 @@ const CARDS = [
   {
     title: 'The runner',
     body: "Kitsu is a short daily 3D runner built around fairness. Run, jump, slide, and switch lanes through a course that everyone shares, then submit your best attempt to the day's leaderboard.",
-    image: 3,
+    image: 0,
   },
   {
     title: 'Same course',
     body: 'One seed per day builds one layout for everyone. Nobody gets an easier run.',
-    image: 0,
+    image: 1,
   },
   {
     title: 'Verified runs',
@@ -25,7 +25,7 @@ const CARDS = [
   {
     title: 'Funded rewards',
     body: 'Season rewards are paid from a sponsor-funded vault that never mints new tokens.',
-    image: 1,
+    image: 3,
   },
 ]
 

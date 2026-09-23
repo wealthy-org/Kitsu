@@ -1,3 +1,42 @@
+// Clean solid colored geometric blocks matching the building color patches from /play.
+// Varied shapes: squares, vertical rectangles, and horizontal rectangles.
+// Palette: #38bdf8 (cyan), #fbbf24 (amber), #f87171 (coral), #34d399 (emerald), #fb7185 (rose)
+const BOXES_1 = [
+  // Vertical rectangle (left top)
+  { x: 55, y: 130, w: 38, h: 88, fill: '#38bdf8', opacity: 0.28 },
+  // Square (left upper)
+  { x: 130, y: 290, w: 52, h: 52, fill: '#fbbf24', opacity: 0.26 },
+  // Horizontal rectangle (left lower)
+  { x: 45, y: 530, w: 105, h: 36, fill: '#f87171', opacity: 0.25 },
+  // Vertical rectangle (left bottom)
+  { x: 110, y: 740, w: 42, h: 95, fill: '#34d399', opacity: 0.26 },
+  // Square (right top)
+  { x: 1280, y: 150, w: 48, h: 48, fill: '#fb7185', opacity: 0.26 },
+  // Vertical rectangle (right mid)
+  { x: 1240, y: 350, w: 40, h: 90, fill: '#38bdf8', opacity: 0.28 },
+  // Horizontal rectangle (right lower)
+  { x: 1260, y: 640, w: 110, h: 38, fill: '#fbbf24', opacity: 0.26 },
+  // Square (top edge accent)
+  { x: 880, y: 55, w: 34, h: 34, fill: '#34d399', opacity: 0.22 },
+]
+
+const BOXES_2 = [
+  // Horizontal rectangle (left mid)
+  { x: 120, y: 410, w: 95, h: 32, fill: '#fb7185', opacity: 0.26 },
+  // Square (left bottom)
+  { x: 60, y: 830, w: 46, h: 46, fill: '#fbbf24', opacity: 0.26 },
+  // Horizontal rectangle (right upper)
+  { x: 1220, y: 240, w: 100, h: 34, fill: '#f87171', opacity: 0.25 },
+  // Square (right mid)
+  { x: 1310, y: 490, w: 50, h: 50, fill: '#34d399', opacity: 0.26 },
+  // Vertical rectangle (right bottom)
+  { x: 1250, y: 760, w: 42, h: 92, fill: '#fb7185', opacity: 0.26 },
+  // Square (right bottom edge)
+  { x: 1310, y: 890, w: 36, h: 36, fill: '#38bdf8', opacity: 0.28 },
+  // Horizontal rectangle (top left edge)
+  { x: 480, y: 45, w: 80, h: 26, fill: '#38bdf8', opacity: 0.22 },
+]
+
 export function CurvedLines() {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -7,68 +46,34 @@ export function CurvedLines() {
         preserveAspectRatio="xMidYMid slice"
         fill="none"
       >
-        <g
-          className="curve-float"
-          stroke="#22d3ee"
-          strokeWidth={10}
-          strokeLinecap="round"
-          opacity={0.22}
-        >
-          <path d="M150 330 C70 330 60 230 130 210 C200 190 240 260 190 300 C150 332 92 318 72 288" />
-          <path d="M120 560 C120 470 220 470 220 560 C220 646 120 646 120 724" />
+        {/* Floating Building Color Blocks — Group 1 */}
+        <g className="curve-float">
+          {BOXES_1.map((b, i) => (
+            <rect
+              key={`b1-${i}`}
+              x={b.x}
+              y={b.y}
+              width={b.w}
+              height={b.h}
+              fill={b.fill}
+              opacity={b.opacity}
+            />
+          ))}
         </g>
 
-        <g
-          className="curve-float-slow"
-          stroke="#34d399"
-          strokeWidth={10}
-          strokeLinecap="round"
-          opacity={0.22}
-        >
-          <path d="M150 470 A30 30 0 1 0 150 410 A30 30 0 1 0 150 470" />
-          <path d="M60 240 L60 430 C60 470 130 470 130 430" />
-        </g>
-
-        <g
-          className="curve-float"
-          stroke="#fb7185"
-          strokeWidth={10}
-          strokeLinecap="round"
-          opacity={0.2}
-        >
-          <path d="M110 520 C110 640 40 660 30 580 C25 540 70 540 80 580" />
-        </g>
-
-        <g
-          className="curve-float-slow"
-          stroke="#fb923c"
-          strokeWidth={10}
-          strokeLinecap="round"
-          opacity={0.2}
-        >
-          <path d="M1330 300 C1250 300 1240 420 1310 440 C1370 455 1390 400 1350 380" />
-          <path d="M700 40 C700 110 780 110 780 40" />
-        </g>
-
-        <g
-          className="curve-float"
-          stroke="#34d399"
-          strokeWidth={10}
-          strokeLinecap="round"
-          opacity={0.2}
-        >
-          <path d="M1380 260 C1380 380 1300 400 1290 330" />
-          <path d="M1290 500 C1230 500 1220 600 1290 620" />
-        </g>
-
-        <g
-          className="curve-float-slow"
-          stroke="#f87171"
-          strokeWidth={10}
-          strokeLinecap="round"
-          opacity={0.18}
-        >
-          <path d="M760 20 C820 20 820 90 760 90" />
+        {/* Floating Building Color Blocks — Group 2 */}
+        <g className="curve-float-slow">
+          {BOXES_2.map((b, i) => (
+            <rect
+              key={`b2-${i}`}
+              x={b.x}
+              y={b.y}
+              width={b.w}
+              height={b.h}
+              fill={b.fill}
+              opacity={b.opacity}
+            />
+          ))}
         </g>
       </svg>
     </div>

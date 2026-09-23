@@ -33,9 +33,9 @@ export function GameScene({
     >
       <color attach="background" args={['#070b16']} />
       <fog attach="fog" args={['#070b16', 60, 340]} />
-      <ambientLight intensity={0.75} color="#a7b6d6" />
-      <directionalLight position={[4, 10, 6]} intensity={1.0} color="#dbe6ff" />
-      <directionalLight position={[-5, 6, -4]} intensity={0.4} color="#7c8cff" />
+      <ambientLight intensity={0.95} color="#c2d1ed" />
+      <directionalLight position={[4, 10, 6]} intensity={1.15} color="#e0ebff" />
+      <directionalLight position={[-5, 6, -4]} intensity={0.45} color="#8a99ff" />
       <CameraRig />
       <SkyDome />
       <Skyline />

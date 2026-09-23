@@ -6,10 +6,10 @@ import { motion, useMotionValue, useTransform, type PanInfo } from 'motion/react
 import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 
 const SLIDES = [
-  { src: '/course-preview/start-line.webp', label: 'Start line' },
-  { src: '/course-preview/mid-city.webp', label: 'Mid-city' },
-  { src: '/course-preview/obstacles-ahead.webp', label: 'Obstacles ahead' },
-  { src: '/course-preview/kitsu-ready.webp', label: 'Kitsu at the ready' },
+  { src: '/course-preview/about-runner.webp', label: 'The runner' },
+  { src: '/course-preview/about-course.webp', label: 'Same course' },
+  { src: '/course-preview/about-verified.webp', label: 'Verified runs' },
+  { src: '/course-preview/about-rewards.webp', label: 'Funded rewards' },
 ]
 
 const SENSITIVITY = 180
