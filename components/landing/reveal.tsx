@@ -1,7 +1,8 @@
 'use client'
 
-import { motion, useReducedMotion } from 'motion/react'
+import { motion } from 'motion/react'
 import type { ReactNode } from 'react'
+import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 
 export function Reveal({
   children,
@@ -12,7 +13,7 @@ export function Reveal({
   delay?: number
   className?: string
 }) {
-  const reduce = useReducedMotion()
+  const reduce = usePrefersReducedMotion()
 
   if (reduce) {
     return <div className={className}>{children}</div>

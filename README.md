@@ -164,9 +164,10 @@ of the production relayer account.
 The Tokyo scene is generated procedurally in three.js (no external models). The Polyfork low-poly
 catalog was used only as visual reference for shapes, palette, and proportions.
 
-The landing card stack and the How stepper are adaptations of the Stack and Stepper components from
-[React Bits](https://reactbits.dev) (MIT licensed), restyled with this project's tokens. All other
-UI is original to this repository.
+The landing card stack, the How stepper, and the FAQ option wheel are adaptations of the Stack,
+Stepper, and Option Wheel components from [React Bits](https://reactbits.dev) (MIT + Commons Clause,
+Copyright (c) 2026 David Haz), restyled with this project's tokens; the option wheel drops the blur.
+All other UI is original to this repository.
 
 ## License
 

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, useReducedMotion, type Variants } from 'motion/react'
+import { motion, type Variants } from 'motion/react'
+import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 
 export interface StepperStep {
   title: string
@@ -13,10 +14,18 @@ const slideVariants: Variants = {
   center: { x: '0%', opacity: 1 },
 }
 
-export function HowStepper({ steps }: { steps: StepperStep[] }) {
+export function HowStepper({
+  steps,
+  heading,
+  intro,
+}: {
+  steps: StepperStep[]
+  heading: string
+  intro: string
+}) {
   const [current, setCurrent] = useState(1)
   const [direction, setDirection] = useState(1)
-  const reduce = useReducedMotion()
+  const reduce = usePrefersReducedMotion()
   const total = steps.length
   const step = steps[current - 1]
   const duration = reduce ? 0 : 0.32
@@ -28,8 +37,10 @@ export function HowStepper({ steps }: { steps: StepperStep[] }) {
 
   return (
     <div data-section="how-stepper" className="mx-auto w-full max-w-2xl">
-      <div className="rounded-card border border-frost/50 bg-charcoal p-6 shadow-card sm:p-8">
-        <ol className="flex items-center overflow-x-auto pb-1">
+      <div>
+        <h2 className="font-display text-[30px] leading-none text-bone">{heading}</h2>
+        <p className="mt-4 text-[15px] leading-relaxed text-ash">{intro}</p>
+        <ol className="mt-10 flex items-center overflow-x-auto pb-1 [scrollbar-color:var(--color-frost)_transparent] [scrollbar-width:thin]">
           {steps.map((item, index) => {
             const stepNumber = index + 1
             const status =
@@ -103,7 +114,7 @@ export function HowStepper({ steps }: { steps: StepperStep[] }) {
             transition={{ duration }}
           >
             <p className="font-mono text-[11px] uppercase tracking-[-0.02em] text-accent-soft">
-              Step {String(current).padStart(2, '0')} of {total}
+              Step {String(current).padStart(2, '0')}
             </p>
             <h3 className="mt-3 font-display text-[22px] leading-tight text-bone">{step.title}</h3>
             <p className="mt-3 text-[14px] leading-relaxed text-ash">{step.body}</p>

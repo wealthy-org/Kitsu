@@ -6,7 +6,7 @@ import './globals.css'
 
 const oxanium = Oxanium({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['200', '400', '500', '600', '700'],
   variable: '--font-oxanium',
   display: 'swap',
 })

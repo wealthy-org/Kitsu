@@ -35,14 +35,11 @@ export function HowItWorks() {
   return (
     <section id="how" data-section="how" className="scroll-mt-20 border-b border-frost/40">
       <div className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="font-display text-[30px] leading-none text-bone">How it works</h2>
-        <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-ash">
-          From the first jump to a seasonal reward, here is the full path of a run, step by step.
-          Practice stays wallet-free; the wallet only comes in when you submit an official result.
-        </p>
-        <div className="mt-10">
-          <HowStepper steps={STEPS} />
-        </div>
+        <HowStepper
+          steps={STEPS}
+          heading="How it works"
+          intro="From the first jump to a seasonal reward, here is the full path of a run, step by step. Practice stays wallet-free; the wallet only comes in when you submit an official result."
+        />
       </div>
     </section>
   )

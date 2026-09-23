@@ -1,11 +1,11 @@
 // Builds public/share/shiba.png: the About-section shiba artwork with its flat navy background keyed
 // out, so the share card can composite it over the hero background. Self-contained (no third-party
-// asset): the source is the project's own public/course-preview/shiba.webp.
+// asset): the source is the project's own public/course-preview/kitsu-ready.webp.
 // Run with: node scripts/generate-share-character.mjs
 import { writeFileSync } from 'node:fs'
 import sharp from 'sharp'
 
-const SOURCE = 'public/course-preview/shiba.webp'
+const SOURCE = 'public/course-preview/kitsu-ready.webp'
 const TARGET = 'public/share/shiba.png'
 const ALPHA_FLOOR = 16
 const ALPHA_CEILING = 44

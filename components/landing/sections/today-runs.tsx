@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { shortenAddress } from '@/lib/util/format'
+import { HeroGrid } from '@/components/landing/hero-grid'
 
 interface TopEntry {
   wallet_address: string
@@ -22,8 +23,13 @@ export function TodayRuns({
   seasonTop: TopEntry[]
 }) {
   return (
-    <section id="today" data-section="today" className="scroll-mt-20 border-b border-frost/40">
-      <div className="mx-auto max-w-6xl px-6 py-20">
+    <section
+      id="today"
+      data-section="today"
+      className="relative scroll-mt-20 overflow-hidden border-b border-frost/40"
+    >
+      <HeroGrid className="opacity-70" />
+      <div className="relative mx-auto max-w-6xl px-6 py-20">
         <div className="grid items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
             <h2 className="font-display text-[30px] leading-none text-bone">

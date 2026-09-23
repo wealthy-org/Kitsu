@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import Image from 'next/image'
-import { motion, useMotionValue, useReducedMotion, useTransform, type PanInfo } from 'motion/react'
+import { motion, useMotionValue, useTransform, type PanInfo } from 'motion/react'
+import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 
 const SLIDES = [
-  { src: '/course-preview/start.webp', label: 'Start line' },
-  { src: '/course-preview/mid.webp', label: 'Mid-city' },
-  { src: '/course-preview/run.webp', label: 'Obstacles ahead' },
-  { src: '/course-preview/shiba.webp', label: 'Kitsu at the ready' },
+  { src: '/course-preview/start-line.webp', label: 'Start line' },
+  { src: '/course-preview/mid-city.webp', label: 'Mid-city' },
+  { src: '/course-preview/obstacles-ahead.webp', label: 'Obstacles ahead' },
+  { src: '/course-preview/kitsu-ready.webp', label: 'Kitsu at the ready' },
 ]
 
 const SENSITIVITY = 180
@@ -55,23 +56,44 @@ function DraggableCard({ onSendToBack, sensitivity, disableDrag, children }: Car
   )
 }
 
-export function CourseStack() {
-  const reduce = useReducedMotion()
-  const [order, setOrder] = useState(() =>
+export function CourseStack({
+  activeIndex,
+  onActiveIndexChange,
+  interactive = true,
+}: {
+  activeIndex?: number
+  onActiveIndexChange?: (index: number) => void
+  interactive?: boolean
+}) {
+  const reduce = usePrefersReducedMotion()
+  const [internalOrder, setInternalOrder] = useState(() =>
     // Rotation puts the last entry in front, so offset the start list to open on the first slide.
     SLIDES.map((_, index) => (index + 1) % SLIDES.length),
   )
 
-  // The last entry is the front card, matching the stack's rotation and scale order.
-  const active = order[order.length - 1]
+  const controlled = activeIndex !== undefined
+  // The front card is the active one; when controlled, the fan order derives from it.
+  const active = controlled ? (activeIndex as number) : internalOrder[internalOrder.length - 1]
+  const order = controlled
+    ? [...SLIDES.map((_, index) => index).filter((index) => index !== active), active]
+    : internalOrder
+
+  function activate(index: number) {
+    if (onActiveIndexChange) {
+      onActiveIndexChange(index)
+      return
+    }
+    setInternalOrder((previous) => [index, ...previous.filter((value) => value !== index)])
+  }
 
   function sendToBack(slideIndex: number) {
-    setOrder((previous) => [slideIndex, ...previous.filter((index) => index !== slideIndex)])
+    activate(controlled ? (active + 1) % SLIDES.length : slideIndex)
   }
 
   return (
     <div
       data-section="course-stack"
+      aria-hidden={interactive ? undefined : true}
       className="relative w-full [perspective:600px]"
       style={{ aspectRatio: '1864 / 988' }}
     >
@@ -79,21 +101,24 @@ export function CourseStack() {
         <DraggableCard
           key={slideIndex}
           sensitivity={SENSITIVITY}
-          disableDrag={reduce === true}
+          disableDrag={reduce === true || !interactive}
           onSendToBack={() => sendToBack(slideIndex)}
         >
           <motion.div
-            role="button"
-            tabIndex={slideIndex === active ? 0 : -1}
-            aria-hidden={slideIndex === active ? undefined : true}
-            aria-label={`Show ${SLIDES[slideIndex].label}`}
-            onClick={() => sendToBack(slideIndex)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                sendToBack(slideIndex)
-              }
-            }}
+            {...(interactive
+              ? {
+                  role: 'button',
+                  tabIndex: slideIndex === active ? 0 : -1,
+                  'aria-label': `Show ${SLIDES[slideIndex].label}`,
+                  onClick: () => sendToBack(slideIndex),
+                  onKeyDown: (event: ReactKeyboardEvent) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      sendToBack(slideIndex)
+                    }
+                  },
+                }
+              : {})}
             initial={false}
             animate={{
               rotateZ: (order.length - stackIndex - 1) * 4,

@@ -152,9 +152,13 @@ export default function LeaderboardPage() {
 
         <section data-section="leaderboard-daily" className="mt-10">
           <h2 className="font-display text-[24px] leading-none text-bone">Daily</h2>
-          <div className="mt-5 grid gap-5 lg:grid-cols-2">
-            <DailyBlock title="Today" state={todayState} entries={todayEntries} />
-            <DailyBlock title="Yesterday" state={yesterdayState} entries={yesterdayEntries} />
+          <div className="mt-5">
+            <DailyBoards
+              todayState={todayState}
+              todayEntries={todayEntries}
+              yesterdayState={yesterdayState}
+              yesterdayEntries={yesterdayEntries}
+            />
           </div>
         </section>
 
@@ -175,7 +179,28 @@ export default function LeaderboardPage() {
   )
 }
 
-function DailyBlock({
+function DailyBoards({
+  todayState,
+  todayEntries,
+  yesterdayState,
+  yesterdayEntries,
+}: {
+  todayState: LoadState
+  todayEntries: DailyEntry[]
+  yesterdayState: LoadState
+  yesterdayEntries: DailyEntry[]
+}) {
+  return (
+    <article className="overflow-hidden rounded-card border border-frost/50 bg-charcoal shadow-card">
+      <div className="grid divide-y divide-frost/40 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+        <DailyBoard title="Today" state={todayState} entries={todayEntries} />
+        <DailyBoard title="Yesterday" state={yesterdayState} entries={yesterdayEntries} />
+      </div>
+    </article>
+  )
+}
+
+function DailyBoard({
   title,
   state,
   entries,
@@ -185,7 +210,7 @@ function DailyBlock({
   entries: DailyEntry[]
 }) {
   return (
-    <article className="rounded-card border border-frost/50 bg-charcoal p-6 shadow-card">
+    <div className="p-6">
       <h3 className="font-mono text-[11px] uppercase tracking-[-0.02em] text-accent-soft">
         {title}
       </h3>
@@ -229,7 +254,7 @@ function DailyBlock({
           </table>
         </div>
       )}
-    </article>
+    </div>
   )
 }
 
