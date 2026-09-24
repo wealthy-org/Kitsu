@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 const PLATFORM = [
@@ -13,12 +14,15 @@ export function SiteFooter() {
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-12 md:grid-cols-[1.4fr_1fr] md:py-16">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2.5">
-            <span
-              aria-hidden="true"
-              className="flex h-9 w-9 items-center justify-center rounded-nav border border-accent-primary/40 bg-accent-primary/15 font-display text-base text-accent-soft"
-            >
-              K
-            </span>
+            <div className="relative h-9 w-9 shrink-0">
+              <Image
+                src="/kitsu-logo.webp"
+                alt="Kitsu logo"
+                fill
+                sizes="36px"
+                className="object-contain"
+              />
+            </div>
             <span className="font-display text-lg tracking-[-0.01em] text-bone">Kitsu</span>
           </div>
           <p className="max-w-sm text-[14px] leading-relaxed text-ash">

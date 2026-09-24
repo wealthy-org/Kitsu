@@ -51,7 +51,7 @@ function stripeBar(
 }
 
 // Tall solid barrier: the player must jump over it (PROJECT.md §1.6).
-function barrierHigh() {
+export function barrierHigh() {
   return (
     <group>
       {/* Heavy base frame */}
@@ -86,7 +86,7 @@ function barrierHigh() {
 
 // Elevated gantry beam with generous open space underneath: player must slide under it (PROJECT.md §1.6).
 // No downward arrows per user directive; clean hazard beam with overhead clearance guide.
-function barrierLow() {
+export function barrierLow() {
   return (
     <group>
       {/* Tall roadside support trusses */}
@@ -120,7 +120,7 @@ function barrierLow() {
 }
 
 // Tokyo city transit bus blocking a lane. Aerodynamic front, route display, glowing headlights.
-function laneBlock(lane: number) {
+export function laneBlock(lane: number) {
   const color = BUS_COLORS[lane % BUS_COLORS.length]
   return (
     <group position={[LANE_OFFSETS[lane], 0, 0]}>
@@ -193,7 +193,7 @@ function laneBlock(lane: number) {
 }
 
 // Broken road / pothole chasm with jagged asphalt and roadside hazard markers. Always blocks full width.
-function gapVisual(width: number) {
+export function gapVisual(width: number) {
   return (
     <group position={[0, 0, -width / 2]}>
       {/* Dark chasm pit beneath track */}
@@ -235,8 +235,54 @@ function gapVisual(width: number) {
   )
 }
 
+export function ShibaCoinMesh() {
+  return (
+    <group>
+      {/* Main Coin Disc */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.34, 0.34, 0.08, 20]} />
+        <meshStandardMaterial
+          color="#f59e0b"
+          emissive="#d97706"
+          emissiveIntensity={0.4}
+          metalness={0.7}
+          roughness={0.3}
+        />
+      </mesh>
+      {/* Raised Beveled Rim */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.36, 0.36, 0.04, 20]} />
+        <meshStandardMaterial
+          color="#fbbf24"
+          emissive="#b45309"
+          emissiveIntensity={0.4}
+          metalness={0.8}
+          roughness={0.25}
+        />
+      </mesh>
+      {/* Shiba Paw Center Pad (Front & Back) */}
+      {[-0.042, 0.042].map((z) => (
+        <group key={`paw-${z}`} position={[0, 0, z]}>
+          {/* Main palm pad */}
+          <mesh position={[0, -0.04, 0]}>
+            <cylinderGeometry args={[0.1, 0.1, 0.015, 12]} />
+            <meshStandardMaterial color="#fef3c7" roughness={0.3} metalness={0.5} />
+          </mesh>
+          {/* 3 Toe pads */}
+          {[-0.09, 0, 0.09].map((tx, idx) => (
+            <mesh key={`toe-${idx}`} position={[tx, 0.08 + (idx === 1 ? 0.03 : 0), 0]}>
+              <cylinderGeometry args={[0.04, 0.04, 0.015, 8]} />
+              <meshStandardMaterial color="#fef3c7" roughness={0.3} metalness={0.5} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  )
+}
+
 // Shiba Paw Arcade Coin: golden beveled coin with raised paw insignia and warm metallic sheen.
-function CoinRow({
+export function CoinRow({
   lane,
   segmentIndex,
   stateRef,
@@ -265,73 +311,15 @@ function CoinRow({
   return (
     <group ref={groupRef} position={[LANE_OFFSETS[lane], 0, -FRONT_OFFSET]}>
       <group position={[0, 0.75, 0]}>
-        {/* Main Coin Disc */}
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.34, 0.34, 0.08, 20]} />
-          <meshStandardMaterial
-            color="#f59e0b"
-            emissive="#d97706"
-            emissiveIntensity={0.4}
-            metalness={0.7}
-            roughness={0.3}
-          />
-        </mesh>
-        {/* Raised Beveled Rim */}
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.36, 0.36, 0.04, 20]} />
-          <meshStandardMaterial
-            color="#fbbf24"
-            emissive="#b45309"
-            emissiveIntensity={0.4}
-            metalness={0.8}
-            roughness={0.25}
-          />
-        </mesh>
-        {/* Shiba Paw Center Pad (Front & Back) */}
-        {[-0.042, 0.042].map((z) => (
-          <group key={`paw-${z}`} position={[0, 0, z]}>
-            {/* Main palm pad */}
-            <mesh position={[0, -0.04, 0]}>
-              <cylinderGeometry args={[0.1, 0.1, 0.015, 12]} />
-              <meshStandardMaterial color="#fef3c7" roughness={0.3} metalness={0.5} />
-            </mesh>
-            {/* 3 Toe pads */}
-            {[-0.09, 0, 0.09].map((tx, idx) => (
-              <mesh key={`toe-${idx}`} position={[tx, 0.08 + (idx === 1 ? 0.03 : 0), 0]}>
-                <cylinderGeometry args={[0.04, 0.04, 0.015, 8]} />
-                <meshStandardMaterial color="#fef3c7" roughness={0.3} metalness={0.5} />
-              </mesh>
-            ))}
-          </group>
-        ))}
+        <ShibaCoinMesh />
       </group>
     </group>
   )
 }
 
-// Dynamic compact car shifting lanes with glowing headlights and turn blinkers.
-function MovingObstacle({
-  segment,
-  stateRef,
-}: {
-  segment: CourseSegment
-  stateRef: React.RefObject<RunState>
-}) {
-  const groupRef = useRef<THREE.Group>(null)
-  useFrame(() => {
-    if (!groupRef.current) {
-      return
-    }
-    const tick = stateRef.current?.tick ?? 0
-    const lane = movingObstacleLaneIndex(segment, tick)
-    groupRef.current.position.x = LANE_OFFSETS[lane]
-  })
-
+export function MovingCarMesh() {
   return (
-    <group
-      ref={groupRef}
-      position={[LANE_OFFSETS[laneNameToIndex(segment.lane ?? 'center')], 0, 0]}
-    >
+    <group>
       {/* Car Body Chassis */}
       <mesh position={[0, 0.65, 0]}>
         <boxGeometry args={[LANE_WIDTH * 0.82, 0.78, 3.8]} />
@@ -394,6 +382,34 @@ function MovingObstacle({
           </mesh>
         )),
       )}
+    </group>
+  )
+}
+
+// Dynamic compact car shifting lanes with glowing headlights and turn blinkers.
+function MovingObstacle({
+  segment,
+  stateRef,
+}: {
+  segment: CourseSegment
+  stateRef: React.RefObject<RunState>
+}) {
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame(() => {
+    if (!groupRef.current) {
+      return
+    }
+    const tick = stateRef.current?.tick ?? 0
+    const lane = movingObstacleLaneIndex(segment, tick)
+    groupRef.current.position.x = LANE_OFFSETS[lane]
+  })
+
+  return (
+    <group
+      ref={groupRef}
+      position={[LANE_OFFSETS[laneNameToIndex(segment.lane ?? 'center')], 0, 0]}
+    >
+      <MovingCarMesh />
     </group>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
@@ -122,7 +123,23 @@ export function SiteHeader() {
               }
               className="fixed inset-y-0 right-0 z-[60] flex w-[min(88vw,360px)] flex-col overflow-y-auto border-l border-frost/40 bg-charcoal px-6 py-6 shadow-card"
             >
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between border-b border-frost/40 pb-4">
+                <Link
+                  href="/"
+                  onClick={close}
+                  className="flex items-center gap-2.5 text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                >
+                  <div className="relative h-8 w-8 shrink-0">
+                    <Image
+                      src="/kitsu-logo.webp"
+                      alt="Kitsu logo"
+                      fill
+                      sizes="32px"
+                      className="object-contain"
+                    />
+                  </div>
+                  <span className="font-display text-[18px] tracking-tight text-bone">KITSU</span>
+                </Link>
                 <button
                   type="button"
                   onClick={close}

@@ -134,6 +134,7 @@ export function CourseStack({
                 alt={slideIndex === active ? SLIDES[slideIndex].label : ''}
                 width={1864}
                 height={988}
+                unoptimized
                 preload={slideIndex === active}
                 sizes="(min-width: 1024px) 560px, 100vw"
                 className="pointer-events-none h-full w-full object-cover"

@@ -21,6 +21,13 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'Kitsu',
   description: 'Same grid. Prove the run.',
+  icons: {
+    icon: [
+      { url: '/kitsu-logo.webp', type: 'image/webp' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: '/apple-icon.png',
+  },
 }
 
 export default function RootLayout({

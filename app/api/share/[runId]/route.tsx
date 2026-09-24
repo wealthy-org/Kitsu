@@ -29,9 +29,9 @@ export async function GET(request: Request, context: { params: Promise<{ runId: 
   const time = run.verifiedTimeMs === null ? 'not verified' : formatTime(run.verifiedTimeMs)
   const points = run.verifiedScore === null ? '-' : String(Number(run.verifiedScore))
 
-  const [background, character] = await Promise.all([
+  const [background, logo] = await Promise.all([
     loadAssetDataUrl(request, '/share/background.png'),
-    loadAssetDataUrl(request, '/share/shiba.png'),
+    loadAssetDataUrl(request, '/share/logo.png'),
   ])
 
   return new ImageResponse(
@@ -64,23 +64,45 @@ export async function GET(request: Request, context: { params: Promise<{ runId: 
           />
         )}
 
-        {/* The character is cut out (transparent PNG) and joined onto the hero background on the
-            right, as an absolute layer so it never moves the text. */}
-        {character !== null && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={character}
-            alt=""
-            width={402}
-            height={458}
+        {/* Right side: Kitsu brand logo with "KITSU" wordmark underneath */}
+        {logo !== null && (
+          <div
             style={{
               position: 'absolute',
-              right: 64,
-              bottom: 48,
-              width: 402,
-              height: 458,
+              right: 80,
+              top: 0,
+              bottom: 0,
+              width: 380,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
-          />
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logo}
+              alt=""
+              width={260}
+              height={260}
+              style={{
+                width: 260,
+                height: 260,
+              }}
+            />
+            <div
+              style={{
+                display: 'flex',
+                fontSize: 48,
+                letterSpacing: 10,
+                color: '#f1f5f9',
+                marginTop: 18,
+                fontWeight: 700,
+              }}
+            >
+              KITSU
+            </div>
+          </div>
         )}
 
         <div
@@ -93,8 +115,18 @@ export async function GET(request: Request, context: { params: Promise<{ runId: 
             padding: 64,
           }}
         >
-          <div style={{ display: 'flex', fontSize: 28, letterSpacing: 4, color: '#b8bab9' }}>
-            KITSU
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div
+              style={{
+                display: 'flex',
+                fontSize: 24,
+                letterSpacing: 4,
+                color: '#38bdf8',
+                fontWeight: 600,
+              }}
+            >
+              VERIFIED RUN
+            </div>
           </div>
           <div style={{ display: 'flex', fontSize: 104, marginTop: 24 }}>{time}</div>
           <div style={{ display: 'flex', fontSize: 34, marginTop: 12, color: '#38bdf8' }}>
@@ -107,6 +139,7 @@ export async function GET(request: Request, context: { params: Promise<{ runId: 
               marginTop: 'auto',
               fontSize: 26,
               color: '#b8bab9',
+              maxWidth: 620,
             }}
           >
             <span>{run.courseDate}</span>

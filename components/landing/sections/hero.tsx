@@ -1,14 +1,35 @@
-import { HeroCarousel } from '@/components/landing/hero-carousel'
+import Image from 'next/image'
 
 export function Hero() {
   return (
     <section id="hero" data-section="hero" className="relative overflow-hidden border-b border-frost/40">
-      <HeroCarousel />
+      <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+        <Image
+          src="/course-preview/hero-bg.webp"
+          alt="Kitsu Cyber Course"
+          fill
+          priority
+          sizes="100vw"
+          className="pointer-events-none object-cover"
+        />
+        <div className="absolute inset-0 bg-void/50" />
+      </div>
       <div className="pointer-events-none relative mx-auto flex min-h-svh max-w-6xl flex-col items-center justify-center px-6 py-24 text-center">
-        {/* Placeholder wordmark: the final logo art is a separate decision. */}
-        <p className="font-display text-[84px] leading-none text-bone md:text-[124px]">
-          KITSU
-        </p>
+        <div className="flex flex-col items-center">
+          <div className="relative mb-4 h-40 w-40 drop-shadow-[0_8px_24px_rgba(0,0,0,0.6)] md:h-56 md:w-56">
+            <Image
+              src="/kitsu-logo.webp"
+              alt="Kitsu logo"
+              fill
+              priority
+              sizes="(max-width: 768px) 160px, 224px"
+              className="object-contain"
+            />
+          </div>
+          <p className="font-display text-[26px] leading-none tracking-[0.2em] text-bone md:text-[34px]">
+            KITSU
+          </p>
+        </div>
         <h1 className="mt-5 font-display text-[32px] leading-[0.95] text-accent-soft md:text-[44px]">
           SAME GRID.
           <br />

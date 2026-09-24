@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useAccount, useSignMessage } from 'wagmi'
 import { GameHud } from '@/components/game/hud'
@@ -309,10 +310,22 @@ export function GameClient() {
           className="absolute inset-0 z-50 flex items-center justify-center bg-void/85 px-6 py-12"
         >
           <div className="w-full max-w-lg rounded-card border border-frost/50 bg-charcoal/90 p-8 text-center shadow-card backdrop-blur-sm">
-            {/* Big placeholder KITSU wordmark logo */}
-            <p className="font-display text-[72px] leading-none text-bone tracking-tight md:text-[88px]">
-              KITSU
-            </p>
+            {/* Kitsu logo & wordmark */}
+            <div className="flex flex-col items-center">
+              <div className="relative mb-3 h-32 w-32 drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)] md:h-40 md:w-40">
+                <Image
+                  src="/kitsu-logo.webp"
+                  alt="Kitsu logo"
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 128px, 160px"
+                  className="object-contain"
+                />
+              </div>
+              <p className="font-display text-[22px] leading-none tracking-[0.2em] text-bone md:text-[28px]">
+                KITSU
+              </p>
+            </div>
             <h1 className="mt-4 font-display text-[22px] leading-tight text-accent-soft md:text-[26px]">
               SAME GRID.
               <br />
