@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { LANE_OFFSETS, LANE_WIDTH } from '@/sim/constants'
@@ -235,6 +235,71 @@ export function gapVisual(width: number) {
   )
 }
 
+export const STOCK_TICKERS = ['nvda', 'aapl', 'tsla', 'googl', 'amzn', 'meta'] as const
+export type StockTicker = (typeof STOCK_TICKERS)[number]
+
+const textureCache = new Map<StockTicker, THREE.Texture>()
+
+function getStockTexture(ticker: StockTicker): THREE.Texture {
+  let tex = textureCache.get(ticker)
+  if (!tex) {
+    tex = new THREE.TextureLoader().load(`/coins/${ticker}-texture.png`)
+    tex.colorSpace = THREE.SRGBColorSpace
+    textureCache.set(ticker, tex)
+  }
+  return tex
+}
+
+export function StockCoinMesh({ ticker = 'nvda' }: { ticker?: StockTicker }) {
+  const texture = useMemo(() => getStockTexture(ticker), [ticker])
+
+  return (
+    <group>
+      {/* Main Golden Coin Disc */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.34, 0.34, 0.08, 24]} />
+        <meshStandardMaterial
+          color="#f59e0b"
+          emissive="#d97706"
+          emissiveIntensity={0.35}
+          metalness={0.7}
+          roughness={0.3}
+        />
+      </mesh>
+      {/* Raised Beveled Rim */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.36, 0.36, 0.04, 24]} />
+        <meshStandardMaterial
+          color="#fbbf24"
+          emissive="#b45309"
+          emissiveIntensity={0.4}
+          metalness={0.8}
+          roughness={0.25}
+        />
+      </mesh>
+      {/* Front Stock Logo Inset Disc */}
+      <mesh position={[0, 0, 0.042]}>
+        <circleGeometry args={[0.31, 32]} />
+        <meshStandardMaterial
+          map={texture}
+          roughness={0.35}
+          metalness={0.15}
+        />
+      </mesh>
+      {/* Back Stock Logo Inset Disc (facing backwards) */}
+      <mesh position={[0, 0, -0.042]} rotation={[0, Math.PI, 0]}>
+        <circleGeometry args={[0.31, 32]} />
+        <meshStandardMaterial
+          map={texture}
+          roughness={0.35}
+          metalness={0.15}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+// Original Shiba paw arcade coin. Not used in-game since phase 20; kept for reuse.
 export function ShibaCoinMesh() {
   return (
     <group>
@@ -281,7 +346,7 @@ export function ShibaCoinMesh() {
   )
 }
 
-// Shiba Paw Arcade Coin: golden beveled coin with raised paw insignia and warm metallic sheen.
+// Stock Logo Arcade Coin: golden beveled coin with Big Tech stock logos (NVDA, AAPL, TSLA, etc.)
 export function CoinRow({
   lane,
   segmentIndex,
@@ -292,6 +357,7 @@ export function CoinRow({
   stateRef: React.RefObject<RunState>
 }) {
   const groupRef = useRef<THREE.Group>(null)
+  const ticker = STOCK_TICKERS[segmentIndex % STOCK_TICKERS.length]
 
   useFrame(() => {
     const group = groupRef.current
@@ -311,7 +377,7 @@ export function CoinRow({
   return (
     <group ref={groupRef} position={[LANE_OFFSETS[lane], 0, -FRONT_OFFSET]}>
       <group position={[0, 0.75, 0]}>
-        <ShibaCoinMesh />
+        <StockCoinMesh ticker={ticker} />
       </group>
     </group>
   )
