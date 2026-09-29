@@ -104,7 +104,9 @@ Names only; values live in `.env`, which is never committed. See `.env.example`.
   `NEXT_PUBLIC_VERIFIED_RUN_REGISTRY_ADDRESS`,
   `NEXT_PUBLIC_SEASON_PRIZE_VAULT_ADDRESS` - deployed contract addresses.
 - `RELAYER_PRIVATE_KEY` - server-only key used by the relayer. Never exposed to the client.
-- `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` - optional cache.
+- `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` - Upstash Redis for the per-IP verify rate
+  limit and the daily leaderboard cache. Leave both empty to run without them; both features fail
+  open (verification continues, the leaderboard is served from Postgres).
 
 ## API
 

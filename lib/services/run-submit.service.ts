@@ -1,6 +1,7 @@
 import { DbNonceStore } from '@/lib/auth/nonce-store'
 import { redeemNonce } from '@/lib/auth/nonce'
 import { verifyRunNonceSignature } from '@/lib/auth/run-nonce'
+import { invalidateDailyCache } from '@/lib/cache/leaderboard-cache'
 import { getDb } from '@/lib/db/client'
 import { writeAuditLog } from '@/lib/repositories/audit.repository'
 import { getOrCreateCourse } from '@/lib/repositories/course.repository'
@@ -117,6 +118,10 @@ export async function submitRun(params: SubmitRunParams): Promise<SubmitOutcome>
     bestTimeMs: verified.time_ms,
     bestScore: verified.score,
   })
+
+  if (isBest) {
+    await invalidateDailyCache(params.courseDate)
+  }
 
   await writeAuditLog('run.verified', wallet, {
     courseDate: params.courseDate,
